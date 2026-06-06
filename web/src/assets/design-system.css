@@ -1,0 +1,301 @@
+:root {
+  /* 主色调 */
+  --primary-color: #1677ff;
+  --primary-hover: #4096ff;
+  --primary-active: #0958d9;
+  --primary-light: #e6f4ff;
+
+  /* 辅助色 */
+  --success-color: #52c41a;
+  --warning-color: #faad14;
+  --error-color: #ff4d4f;
+  --info-color: #1677ff;
+
+  /* 中性色 */
+  --text-primary: #262626;
+  --text-secondary: #595959;
+  --text-light: #8c8c8c;
+  --text-inverse: #ffffff;
+
+  /* 背景色 */
+  --bg-base: #f5f7fa;
+  --bg-container: #ffffff;
+  --bg-elevated: #ffffff;
+  --bg-layout: #f0f2f5;
+
+  /* 边框 */
+  --border-color: #e8e8e8;
+  --border-light: #f0f0f0;
+  --border-radius-sm: 4px;
+  --border-radius-md: 6px;
+  --border-radius-lg: 8px;
+
+  /* 阴影 */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+
+  /* 间距 */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+
+  /* 字体 */
+  --font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
+    sans-serif;
+  --font-size-xs: 12px;
+  --font-size-sm: 14px;
+  --font-size-md: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 20px;
+  --font-size-xxl: 24px;
+
+  /* 过渡 */
+  --transition-fast: 0.2s;
+  --transition-normal: 0.3s;
+
+  /* Element Plus 变量覆盖 */
+  --el-color-primary: var(--primary-color);
+  --el-color-primary-light-3: var(--primary-hover);
+  --el-color-primary-dark-2: var(--primary-active);
+  --el-border-radius-base: var(--border-radius-sm);
+  --el-font-size-base: var(--font-size-md);
+  --el-text-color-primary: var(--text-primary);
+  --el-text-color-regular: var(--text-secondary);
+  --el-text-color-secondary: var(--text-light);
+  --el-border-color: var(--border-color);
+  --el-border-color-light: var(--border-light);
+  --el-fill-color-blank: var(--bg-container);
+  --el-bg-color: var(--bg-layout);
+  --el-menu-active-color: var(--primary-color);
+  --el-menu-text-color: var(--text-secondary);
+  --el-menu-hover-bg-color: var(--primary-light);
+}
+
+/* 通用组件样式 */
+.app-card {
+  background-color: var(--bg-container);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-sm);
+  transition:
+    box-shadow var(--transition-fast),
+    transform var(--transition-fast);
+  overflow: hidden;
+}
+
+.app-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+/* 页面容器 */
+.page-container {
+  padding: var(--spacing-lg);
+  background-color: var(--bg-layout);
+  min-height: 100%;
+}
+
+/* 页面标题 */
+.page-title {
+  margin-bottom: var(--spacing-lg);
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* 按钮样式增强 */
+.el-button {
+  font-weight: 500;
+}
+
+.el-button--primary {
+  background-color: var(--primary-color);
+}
+
+.el-button--primary:hover {
+  background-color: var(--primary-hover);
+}
+
+/* 表格样式增强 */
+.el-table {
+  border-radius: var(--border-radius-sm);
+  overflow: hidden;
+}
+
+.el-table th {
+  background-color: var(--bg-layout) !important;
+  font-weight: 600;
+}
+
+/* 表单样式增强 */
+.el-form-item__label {
+  font-weight: 500;
+}
+
+.el-input__inner {
+  border-radius: var(--border-radius-sm);
+}
+
+/* 卡片标题 */
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md);
+  border-bottom: 1px solid var(--border-light);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* 卡片内容 */
+.card-content {
+  padding: var(--spacing-md);
+}
+
+/* 全局样式重置 */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-family);
+  font-size: var(--font-size-md);
+  color: var(--text-primary);
+  background-color: var(--bg-base);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 卡片样式 */
+.app-card {
+  background-color: var(--bg-container);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--transition-normal);
+}
+
+.app-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+/* 按钮样式增强 */
+.el-button--primary {
+  background-color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+}
+
+.el-button--primary:hover,
+.el-button--primary:focus {
+  background-color: var(--primary-hover) !important;
+  border-color: var(--primary-hover) !important;
+}
+
+.el-button--primary:active {
+  background-color: var(--primary-active) !important;
+  border-color: var(--primary-active) !important;
+}
+
+/* 表格样式增强 */
+.el-table {
+  border-radius: var(--border-radius-md);
+  overflow: hidden;
+}
+
+.el-table th {
+  background-color: var(--bg-layout) !important;
+  font-weight: 500;
+}
+
+/* 表单样式增强 */
+.el-input__inner {
+  border-radius: var(--border-radius-sm) !important;
+}
+
+.el-input__inner:hover {
+  border-color: var(--primary-hover) !important;
+}
+
+.el-input__inner:focus {
+  border-color: var(--primary-color) !important;
+}
+
+/* 动画效果 */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity var(--transition-normal);
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* 响应式布局辅助类 */
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+/* 间距辅助类 */
+.mt-sm {
+  margin-top: var(--spacing-sm);
+}
+.mt-md {
+  margin-top: var(--spacing-md);
+}
+.mt-lg {
+  margin-top: var(--spacing-lg);
+}
+.mb-sm {
+  margin-bottom: var(--spacing-sm);
+}
+.mb-md {
+  margin-bottom: var(--spacing-md);
+}
+.mb-lg {
+  margin-bottom: var(--spacing-lg);
+}
+.ml-sm {
+  margin-left: var(--spacing-sm);
+}
+.ml-md {
+  margin-left: var(--spacing-md);
+}
+.ml-lg {
+  margin-left: var(--spacing-lg);
+}
+.mr-sm {
+  margin-right: var(--spacing-sm);
+}
+.mr-md {
+  margin-right: var(--spacing-md);
+}
+.mr-lg {
+  margin-right: var(--spacing-lg);
+}
+.p-sm {
+  padding: var(--spacing-sm);
+}
+.p-md {
+  padding: var(--spacing-md);
+}
+.p-lg {
+  padding: var(--spacing-lg);
+}

@@ -1,0 +1,17 @@
+@import './design-system.css';
+
+#app {
+  width: 100%;
+  height: 100vh;
+  font-weight: normal;
+}
+
+a {
+  text-decoration: none;
+  color: var(--primary-color);
+  transition: color var(--transition-fast);
+}
+
+a:hover {
+  color: var(--primary-hover);
+}
