@@ -13,7 +13,6 @@
         </div>
 
         <div class="menu-group">
-          <div class="menu-group-label">工作区</div>
           <nav class="menu">
             <router-link
               v-for="item in menuItems"
@@ -33,19 +32,6 @@
               </div>
             </router-link>
           </nav>
-        </div>
-
-        <div class="sidebar-panel">
-          <div class="sidebar-panel-head">
-            <span>当前账号</span>
-          </div>
-          <div class="sidebar-user">
-            <el-avatar :size="42">{{ userInitial }}</el-avatar>
-            <div class="sidebar-user-copy">
-              <strong>{{ currentUser.username || '用户' }}</strong>
-              <span>{{ currentUser.role === 'admin' ? '管理员权限' : '普通账号' }}</span>
-            </div>
-          </div>
         </div>
       </div>
     </aside>
@@ -243,14 +229,15 @@ const logout = () => {
   padding: 22px 18px 18px;
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: 18px;
+  overflow: hidden;
 }
 
 .brand-block {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 6px 4px 18px;
+  padding: 4px 4px 16px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -282,37 +269,42 @@ const logout = () => {
 }
 
 .brand-copy span {
-  font-size: var(--font-size-sm);
-  color: rgba(232, 239, 251, 0.68);
+  font-size: 12px;
+  color: rgba(232, 239, 251, 0.56);
 }
 
 .menu-group {
   flex: 1;
   min-height: 0;
-}
-
-.menu-group-label {
-  padding: 0 8px 10px;
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: rgba(232, 239, 251, 0.42);
+  display: flex;
+  flex-direction: column;
 }
 
 .menu {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding-right: 4px;
+  padding-bottom: 8px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.menu::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
 }
 
 .menu-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px;
-  border-radius: 18px;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 16px;
   color: rgba(232, 239, 251, 0.76);
   text-decoration: none;
   transition:
@@ -335,14 +327,14 @@ const logout = () => {
 }
 
 .menu-item-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 14px;
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: rgba(255, 255, 255, 0.05);
-  font-size: 18px;
+  font-size: 16px;
   flex-shrink: 0;
 }
 
@@ -353,60 +345,18 @@ const logout = () => {
 .menu-item-copy {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 0;
   min-width: 0;
 }
 
 .menu-item-label {
-  font-size: var(--font-size-md);
+  font-size: 15px;
   font-weight: 600;
   color: inherit;
 }
 
 .menu-item-desc {
-  font-size: 12px;
-  color: rgba(232, 239, 251, 0.5);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.sidebar-panel {
-  padding: 14px;
-  border-radius: 22px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.sidebar-panel-head {
-  margin-bottom: 12px;
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: rgba(232, 239, 251, 0.46);
-}
-
-.sidebar-user {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.sidebar-user-copy {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  min-width: 0;
-}
-
-.sidebar-user-copy strong {
-  font-size: var(--font-size-md);
-  color: #ffffff;
-}
-
-.sidebar-user-copy span {
-  color: rgba(232, 239, 251, 0.6);
-  font-size: 12px;
+  display: none;
 }
 
 .main-content {
