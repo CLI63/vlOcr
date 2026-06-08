@@ -2,167 +2,194 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs-extra');
+const crypto = require('crypto');
+const { v4: uuidv4 } = require('uuid');
 const router = express.Router();
+const publicRouter = express.Router();
+const config = require('../config/appConfig');
+const DatabaseService = require('../services/databaseService');
+const {
+  allowedExtensions,
+  createSafeFilename,
+  getUploadLimitBytes,
+  isAllowedFile,
+  getUploadPathByStoredFilename,
+} = require('../utils/fileSecurity');
 
-// 确保上传目录存在
 const uploadDir = path.join(__dirname, '..', 'uploads');
 fs.ensureDirSync(uploadDir);
 
-// 配置文件存储
+function buildFileUrl(req, filename) {
+  const baseUrl = config.publicFileBaseUrl || `${req.protocol}://${req.get('host')}`;
+  return `${baseUrl.replace(/\/$/, '')}/api/upload/files/${filename}`;
+}
+
+function buildFileUrlById(req, fileId) {
+  const baseUrl = config.publicFileBaseUrl || `${req.protocol}://${req.get('host')}`;
+  return `${baseUrl.replace(/\/$/, '')}/api/upload/files/${fileId}`;
+}
+
+function validateFilename(filename) {
+  if (!filename || filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
+    return false;
+  }
+  return allowedExtensions.has(path.extname(filename).toLowerCase());
+}
+
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, uploadDir);
   },
   filename: function (req, file, cb) {
-    // 生成唯一文件名
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const ext = path.extname(file.originalname);
-    cb(null, uniqueSuffix + ext);
-  }
+    try {
+      cb(null, createSafeFilename(file.originalname));
+    } catch (error) {
+      cb(error);
+    }
+  },
 });
 
-// 文件过滤器
-const fileFilter = (req, file, cb) => {
-  // 允许所有文件类型
-  cb(null, true);
-};
-
-// 创建multer实例
 const upload = multer({
-  storage: storage,
-  fileFilter: fileFilter,
+  storage,
+  fileFilter: function (req, file, cb) {
+    if (!isAllowedFile(file)) {
+      return cb(new Error('仅支持 JPG、PNG、WEBP 或 PDF 文件'));
+    }
+    cb(null, true);
+  },
   limits: {
-    fileSize: 1 * 1024 * 1024 // 限制10MB
-  }
+    fileSize: getUploadLimitBytes(),
+  },
 });
 
-// 单文件上传接口
-router.post('/single', upload.single('file'), (req, res) => {
+function hashFile(filePath) {
+  const fileBuffer = fs.readFileSync(filePath);
+  return crypto.createHash('sha256').update(fileBuffer).digest('hex');
+}
+
+async function persistUploadedFile(req, file) {
+  const id = uuidv4();
+  const saved = await DatabaseService.saveUploadedFile({
+    id,
+    storedFilename: file.filename,
+    originalName: file.originalname,
+    mimeType: file.mimetype,
+    size: file.size,
+    sha256: hashFile(file.path),
+    ownerUserId: req.user?.userId || null,
+  });
+
+  return {
+    id: saved.id,
+    originalName: saved.original_name,
+    filename: saved.original_name,
+    storedFilename: saved.stored_filename,
+    mimeType: saved.mime_type,
+    mimetype: saved.mime_type,
+    size: saved.size,
+    sha256: saved.sha256,
+    url: buildFileUrlById(req, saved.id),
+    legacyUrl: buildFileUrl(req, saved.stored_filename),
+  };
+}
+
+router.post('/single', upload.single('file'), async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ success: false, message: '没有选择文件' });
+  }
+
+  const fileData = await persistUploadedFile(req, req.file);
+  res.json({
+    success: true,
+    message: '文件上传成功',
+    data: fileData,
+  });
+});
+
+router.post('/multiple', upload.array('files', 10), async (req, res) => {
+  if (!req.files || req.files.length === 0) {
+    return res.status(400).json({ success: false, message: '没有选择文件' });
+  }
+
+  const files = [];
+  for (const file of req.files) {
+    files.push(await persistUploadedFile(req, file));
+  }
+
+  res.json({ success: true, message: '文件上传成功', data: files });
+});
+
+publicRouter.get('/:fileId', async (req, res) => {
+  const fileId = req.params.fileId;
+
   try {
-    if (!req.file) {
-      return res.status(400).json({
-        success: false,
-        message: '没有选择文件'
-      });
+    const fileMeta = await DatabaseService.getUploadedFileById(fileId, { role: 'admin' });
+    if (fileMeta) {
+      const filePath = getUploadPathByStoredFilename(fileMeta.stored_filename);
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+      return res.sendFile(filePath);
     }
-
-    // 构建文件访问URL
-    const fileUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
-
-    res.json({
-      success: true,
-      message: '文件上传成功',
-      data: {
-        filename: req.file.originalname,
-        url: fileUrl,
-        size: req.file.size,
-        mimetype: req.file.mimetype
-      }
-    });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: '文件上传失败',
-      error: error.message
-    });
+    return res.status(404).json({ success: false, message: error.message || '文件不存在' });
   }
+
+  if (!validateFilename(fileId)) {
+    return res.status(404).json({ success: false, message: '文件不存在' });
+  }
+
+  const filePath = path.join(uploadDir, fileId);
+  if (!await fs.pathExists(filePath)) {
+    return res.status(404).json({ success: false, message: '文件不存在' });
+  }
+
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.sendFile(filePath);
 });
 
-// 多文件上传接口
-router.post('/multiple', upload.array('files', 10), (req, res) => {
-  try {
-    if (!req.files || req.files.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: '没有选择文件'
-      });
-    }
-
-    const files = req.files.map(file => ({
-      filename: file.originalname,
-      url: `${req.protocol}://${req.get('host')}/uploads/${file.filename}`,
-      size: file.size,
-      mimetype: file.mimetype
-    }));
-
-    res.json({
-      success: true,
-      message: '文件上传成功',
-      data: files
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: '文件上传失败',
-      error: error.message
-    });
-  }
-});
-
-// 获取已上传文件列表
 router.get('/list', async (req, res) => {
   try {
-    const files = await fs.readdir(uploadDir);
-    const fileList = files.filter(file => {
-      // 过滤掉目录
-      return fs.statSync(path.join(uploadDir, file)).isFile();
-    }).map(file => {
-      const stats = fs.statSync(path.join(uploadDir, file));
-      return {
-        filename: file,
-        url: `${req.protocol}://${req.get('host')}/uploads/${file}`,
-        size: stats.size,
-        uploadTime: stats.birthtime
-      };
-    });
+    const files = await DatabaseService.listUploadedFiles(req.user);
+    const fileList = files.map((file) => ({
+      id: file.id,
+      filename: file.original_name,
+      originalName: file.original_name,
+      storedFilename: file.stored_filename,
+      mimeType: file.mime_type,
+      size: file.size,
+      sha256: file.sha256,
+      url: buildFileUrlById(req, file.id),
+      uploadTime: file.created_at,
+    }));
 
-    res.json({
-      success: true,
-      data: fileList
-    });
+    res.json({ success: true, data: fileList });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: '获取文件列表失败',
-      error: error.message
-    });
+    res.status(500).json({ success: false, message: '获取文件列表失败', error: error.message });
   }
 });
 
-// 删除文件接口
-router.delete('/:filename', async (req, res) => {
+router.delete('/:fileId', async (req, res) => {
   try {
-    const filename = req.params.filename;
-    const filePath = path.join(uploadDir, filename);
-
-    // 安全检查：防止路径遍历攻击
-    if (filename.includes('..') || filename.includes('/')) {
-      return res.status(400).json({
-        success: false,
-        message: '非法文件名'
-      });
+    const file = await DatabaseService.markUploadedFileDeleted(req.params.fileId, req.user);
+    if (!file) {
+      return res.status(404).json({ success: false, message: '文件不存在' });
     }
 
-    if (!await fs.pathExists(filePath)) {
-      return res.status(404).json({
-        success: false,
-        message: '文件不存在'
-      });
+    const filePath = path.join(uploadDir, file.stored_filename);
+    if (await fs.pathExists(filePath)) {
+      await fs.remove(filePath);
     }
-
-    await fs.remove(filePath);
-
-    res.json({
-      success: true,
-      message: '文件删除成功'
-    });
+    res.json({ success: true, message: '文件删除成功' });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: '文件删除失败',
-      error: error.message
-    });
+    res.status(500).json({ success: false, message: '文件删除失败', error: error.message });
   }
+});
+
+router.use((error, req, res, next) => {
+  if (error) {
+    return res.status(400).json({ success: false, message: error.message });
+  }
+  next();
 });
 
 module.exports = router;
+module.exports.publicRouter = publicRouter;

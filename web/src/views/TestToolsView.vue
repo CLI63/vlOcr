@@ -1,138 +1,237 @@
 <template>
-  <div class="test-tools">
-    <!-- <h1>测试工具</h1> -->
+  <div class="page-container workspace">
+    <div class="page-header">
+      <div class="page-title">
+        <el-icon class="page-icon"><Document /></el-icon>
+        <div>
+          <h1>识别工作台</h1>
+          <p class="page-subtitle">上传文件、触发识别、核对结构化结果，并完成模板校对闭环。</p>
+        </div>
+      </div>
+      <div class="page-actions">
+        <el-tag v-if="result.fromHistory" type="info" effect="plain">历史命中</el-tag>
+        <el-button :disabled="busy" @click="resetWorkspace">
+          <el-icon><RefreshLeft /></el-icon>
+          重置工作台
+        </el-button>
+      </div>
+    </div>
 
-    <div class="test-methods">
-      <el-row :gutter="20" align="middle">
-        <el-col :span="14">
-          <el-input
-            v-model="imageUrl"
-            placeholder="或输入影像URL"
-            :disabled="recognizing"
-            clearable
-          >
+    <div class="workspace-grid">
+      <section class="panel surface-card input-panel">
+        <div class="panel-title">
+          <div>
+            <h2>文件与来源</h2>
+            <p class="panel-subtitle">支持图片与 PDF，优先面向单次高质量识别流程。</p>
+          </div>
+          <el-tag effect="plain">{{ currentFile ? '已选文件' : '等待输入' }}</el-tag>
+        </div>
+
+        <el-upload
+          class="upload-area"
+          drag
+          :action="uploadUrl"
+          :before-upload="beforeUpload"
+          :on-success="handleUploadSuccess"
+          :on-error="handleUploadError"
+          :on-change="handleUploadChange"
+          :show-file-list="false"
+          accept="image/*,application/pdf,.pdf"
+          name="file"
+          :disabled="busy"
+          :headers="uploadHeaders"
+        >
+          <el-icon class="upload-icon"><UploadFilled /></el-icon>
+          <div class="upload-text">拖拽或点击上传文件</div>
+          <div class="upload-tip">JPG / PNG / JPEG / WEBP / PDF，最大 10MB</div>
+        </el-upload>
+
+        <div class="url-row">
+          <el-input v-model="imageUrl" placeholder="或输入 HTTPS 图片 URL" clearable :disabled="busy">
             <template #prepend>
               <el-icon><Link /></el-icon>
             </template>
           </el-input>
-        </el-col>
-        <el-col :span="8">
-          <el-upload
-            class="compact-upload"
-            :action="uploadUrl"
-            :before-upload="beforeUpload"
-            :on-success="handleSuccess"
-            :on-error="handleError"
-            :show-file-list="false"
-            accept="image/*"
-            name="file"
-            :disabled="recognizing || uploading"
-            :headers="uploadHeaders"
-          >
-            <el-button :loading="uploading" :disabled="uploading || recognizing">
-              <el-icon><upload-filled /></el-icon>
-              上传文件
-            </el-button>
-            <div class="upload-tip">JPG/PNG/JPEG ≤ 1MB</div>
-          </el-upload>
-        </el-col>
-
-        <el-col :span="2">
-          <el-button
-            type="primary"
-            :loading="recognizing"
-            :disabled="(!uploadedImage && !imageUrl) || recognizing"
-            @click="startRecognition"
-          >
-            开始识别
-          </el-button>
-        </el-col>
-      </el-row>
-    </div>
-    <!-- v-if="result || recognizing" -->
-    <div class="result-section">
-      <h3>识别结果</h3>
-      <!-- v-if="recognizing" -->
-      <div v-if="recognizing" class="loading-container">
-        <el-icon class="is-loading"><Loading /></el-icon>
-        <span>正在识别中...</span>
-      </div>
-      <!-- v-if="result" -->
-      <div class="result-container" v-else>
-        <div class="result-grid">
-          <!-- 左侧：模型信息和识别文本 -->
-          <div class="result-info">
-            <h4>模型信息</h4>
-            <div class="info-card">
-              <p><strong>最佳匹配模型：</strong>{{ result.bestMatch }}</p>
-              <p v-if="recognitionTime > 0"><strong>识别耗时：</strong>{{ recognitionTime }} 秒</p>
-              <div v-if="result.allModel && result.allModel.length > 0">
-                <h5>匹配到的模型：</h5>
-                <div v-for="(model, index) in result.allModel" :key="index" class="model-info">
-                  <p><strong>模型：</strong>{{ model.modelNmae }}</p>
-                  <p><strong>关键词：</strong>{{ model.keyWords ? model.keyWords.join(', ') : '暂无关键词' }}</p>
-                  <p><strong>权重：</strong>{{ model.score }}</p>
-                </div>
-              </div>
-              <div class="ocr-text-content">
-                <h5>识别文本：</h5>
-                <pre style="height: 308px">{{ result.ocrText || '暂无结果' }}</pre>
-              </div>
-            </div>
-          </div>
-
-          <!-- 右侧：OCR详细信息（可折叠JSON） -->
-          <div class="ocr-result">
-            <h4>OCR详细信息</h4>
-            <div class="info-card">
-              <el-button
-                type="primary"
-                size="small"
-                @click="copyResult"
-                style="margin-bottom: 20px"
-              >
-                <el-icon><DocumentCopy /></el-icon>
-                一键复制
-              </el-button>
-              <el-collapse v-model="activeNames">
-                <!-- <el-collapse-item title="点击查看详细JSON结果" name="1">
-                </el-collapse-item> -->
-                <pre class="json-content" style="min-height: 300px">{{
-                  JSON.stringify(result.ocrInfo, null, 2) || '暂无结果'
-                }}</pre>
-              </el-collapse>
-            </div>
-          </div>
+          <el-button :disabled="busy || !imageUrl.trim()" @click="useUrlSource">使用</el-button>
         </div>
-      </div>
+
+        <div class="preview-box">
+          <template v-if="currentFile">
+            <el-image
+              v-if="isImageFile"
+              :src="previewUrl"
+              fit="contain"
+              class="image-preview"
+              :preview-src-list="[previewUrl]"
+              :preview-teleported="true"
+            />
+            <div v-else class="pdf-preview">
+              <el-icon><Document /></el-icon>
+              <strong>{{ currentFile.originalName || 'PDF 文件' }}</strong>
+              <span>PDF 预览将在多页识别版本中完善</span>
+            </div>
+            <div class="file-meta">
+              <span>{{ currentFile.originalName || currentFile.url }}</span>
+              <span v-if="currentFile.size">{{ formatSize(currentFile.size) }}</span>
+            </div>
+          </template>
+          <el-empty v-else description="暂无文件" />
+        </div>
+
+        <el-button
+          type="primary"
+          class="recognize-button"
+          :loading="recognizing"
+          :disabled="!currentFile || busy"
+          @click="startRecognition"
+        >
+          开始识别
+        </el-button>
+      </section>
+
+      <section class="panel surface-card result-panel">
+        <div class="panel-title">
+          <div>
+            <h2>识别结果</h2>
+            <p class="panel-subtitle">从分类匹配到文本与 JSON 输出，统一在右侧工作区完成。</p>
+          </div>
+          <el-steps :active="activeStep" finish-status="success" simple class="status-steps">
+            <el-step title="上传" />
+            <el-step title="分类" />
+            <el-step title="识别" />
+            <el-step title="完成" />
+          </el-steps>
+        </div>
+
+        <el-alert
+          v-if="statusMessage"
+          :title="statusMessage"
+          :type="statusType"
+          show-icon
+          :closable="false"
+          class="status-alert"
+        />
+
+        <div class="result-summary">
+          <el-descriptions :column="2" border>
+            <el-descriptions-item label="最佳匹配">{{ result.bestMatch || '暂无' }}</el-descriptions-item>
+            <el-descriptions-item label="耗时">{{ recognitionTime ? `${recognitionTime} 秒` : '暂无' }}</el-descriptions-item>
+            <el-descriptions-item label="文件ID">{{ result.fileId || currentFile?.id || '暂无' }}</el-descriptions-item>
+            <el-descriptions-item label="MD5">{{ result.fileMd5 || '暂无' }}</el-descriptions-item>
+          </el-descriptions>
+        </div>
+
+        <div v-if="normalizedModels.length" class="models-list">
+          <h3>匹配模型</h3>
+          <el-table :data="normalizedModels" size="small" border>
+            <el-table-column prop="modelName" label="模型" />
+            <el-table-column label="关键词">
+              <template #default="{ row }">
+                {{ Array.isArray(row.keyWords) ? row.keyWords.join(', ') : '暂无' }}
+              </template>
+            </el-table-column>
+            <el-table-column prop="score" label="权重" width="90" />
+          </el-table>
+        </div>
+
+        <el-tabs v-model="activeTab" class="result-tabs">
+          <el-tab-pane label="识别文本" name="text">
+            <pre class="result-content">{{ result.ocrText || '暂无结果' }}</pre>
+          </el-tab-pane>
+          <el-tab-pane label="结构化 JSON" name="json">
+            <pre class="result-content">{{ formattedJson }}</pre>
+          </el-tab-pane>
+          <el-tab-pane label="模板校对" name="correction">
+            <div v-if="templateFields.length" class="correction-form">
+              <div v-for="field in templateFields" :key="field.key" class="correction-field">
+                <label>{{ field.label }}</label>
+                <el-input
+                  v-if="field.type !== 'textarea'"
+                  v-model="correctionForm[field.key]"
+                  :placeholder="field.placeholder || field.label"
+                />
+                <el-input
+                  v-else
+                  v-model="correctionForm[field.key]"
+                  type="textarea"
+                  :rows="3"
+                  :placeholder="field.placeholder || field.label"
+                />
+              </div>
+              <div class="result-actions">
+                <el-button type="primary" :disabled="!result.id && !result.fileId" @click="saveCorrectionRecord">
+                  保存校对
+                </el-button>
+                <el-button :disabled="!correctionId" @click="confirmCorrectionRecord">确认结果</el-button>
+              </div>
+            </div>
+            <el-empty v-else description="当前模型未绑定模板" />
+          </el-tab-pane>
+        </el-tabs>
+
+        <div class="result-actions">
+          <el-button :disabled="!hasResult" @click="copyText">
+            <el-icon><DocumentCopy /></el-icon>
+            复制文本
+          </el-button>
+          <el-button :disabled="!hasResult" @click="copyJson">
+            <el-icon><DocumentCopy /></el-icon>
+            复制 JSON
+          </el-button>
+          <el-button :disabled="!hasResult" @click="downloadText">
+            <el-icon><Download /></el-icon>
+            TXT
+          </el-button>
+          <el-button :disabled="!hasResult" @click="downloadJson">
+            <el-icon><Download /></el-icon>
+            JSON
+          </el-button>
+        </div>
+      </section>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed } from 'vue'
+import { computed, onUnmounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import { UploadFilled, DocumentCopy, Download, Loading, Link } from '@element-plus/icons-vue'
+import {
+  Document,
+  DocumentCopy,
+  Download,
+  Link,
+  RefreshLeft,
+  UploadFilled,
+} from '@element-plus/icons-vue'
 import { classifyOcr } from '@/api/test'
+import { confirmCorrection, saveCorrection } from '@/api/corrections'
 
 defineOptions({
   name: 'TestToolsView',
 })
 
 const uploadUrl = `${import.meta.env.VITE_FILE_API_BASE_URL}/api/upload/single`
-const uploadedImage = ref('')
 const imageUrl = ref('')
-const recognizing = ref(false)
-const uploading = ref(false)
+const currentFile = ref(null)
 const result = ref({})
-const activeNames = ref([])
-const recognitionTime = ref(0)
+const activeTab = ref('text')
+const statusMessage = ref('')
+const statusType = ref('info')
+const activeStep = ref(0)
+const uploading = ref(false)
+const recognizing = ref(false)
 const startTime = ref(0)
+const recognitionTime = ref('')
+const correctionId = ref('')
+const correctionForm = reactive({})
 
-// console.log('文件上传地址：' + import.meta.env.VITE_FILE_API_BASE_URL)
-// console.log('API接口地址：' + import.meta.env.VITE_API_BASE_URL)
-
-// 文件上传请求头，包含Authorization认证
+const busy = computed(() => uploading.value || recognizing.value)
+const hasResult = computed(() => Boolean(result.value.ocrText || Object.keys(result.value.ocrInfo || {}).length))
+const isImageFile = computed(() => {
+  const mimeType = currentFile.value?.mimeType || currentFile.value?.mimetype || ''
+  return mimeType.startsWith('image/') || /\.(jpg|jpeg|png|webp)$/i.test(currentFile.value?.url || '')
+})
+const previewUrl = computed(() => currentFile.value?.previewUrl || currentFile.value?.url || '')
 const uploadHeaders = computed(() => {
   const token = localStorage.getItem('token')
   return {
@@ -140,330 +239,447 @@ const uploadHeaders = computed(() => {
   }
 })
 
-const testForm = reactive({
-  model: 'general-ocr',
-  type: 'ocr',
-})
+const normalizedModels = computed(() => normalizeAllModel(result.value.allModel))
+const formattedJson = computed(() => JSON.stringify(normalizeJson(result.value.ocrInfo), null, 2))
+const templateFields = computed(() => result.value.template?.schemaJson || [])
 
-const typeMap = {
-  ocr: '文字识别',
-  table: '表格识别',
-  invoice: '票据识别',
+function normalizeAllModel(value) {
+  if (Array.isArray(value)) {
+    return value.map((item) => ({
+      ...item,
+      modelName: item.modelName || item.modelNmae || '未知模型',
+    }))
+  }
+
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value)
+      return normalizeAllModel(parsed)
+    } catch {
+      return []
+    }
+  }
+
+  return []
 }
 
-const beforeUpload = (file) => {
-  const isImage = file.type.startsWith('image/')
-  const isLt10M = file.size / 1024 / 1024 < 10
+function normalizeJson(value) {
+  if (!value) return {}
+  if (typeof value === 'object') return value
+  try {
+    return JSON.parse(value)
+  } catch {
+    return { text: String(value) }
+  }
+}
 
-  if (!isImage) {
-    ElMessage.error('只能上传图片文件！')
+function normalizeResult(payload = {}) {
+  return {
+    ...payload,
+    allModel: normalizeAllModel(payload.allModel),
+    ocrInfo: normalizeJson(payload.ocrInfo),
+    structuredJson: normalizeJson(payload.structuredJson),
+  }
+}
+
+function syncCorrectionForm() {
+  const source = result.value.correctedJson || result.value.structuredJson || result.value.ocrInfo || {}
+  Object.keys(correctionForm).forEach((key) => {
+    delete correctionForm[key]
+  })
+  templateFields.value.forEach((field) => {
+    correctionForm[field.key] = source[field.key] ?? field.defaultValue ?? ''
+  })
+}
+
+function beforeUpload(file) {
+  const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name)
+  const isImage = file.type.startsWith('image/')
+  const isLt10M = file.size / 1024 / 1024 <= 10
+
+  if (!isImage && !isPdf) {
+    ElMessage.error('仅支持 JPG、PNG、JPEG、WEBP 或 PDF 文件')
     return false
   }
+
   if (!isLt10M) {
-    ElMessage.error('图片大小不能超过 10MB！')
+    ElMessage.error('文件大小不能超过 10MB')
     return false
   }
+
   uploading.value = true
+  activeStep.value = 0
+  statusType.value = 'info'
+  statusMessage.value = '正在上传文件'
   return true
 }
 
-const handleSuccess = (response, file) => {
+function handleUploadSuccess(response) {
   uploading.value = false
-  if (response.success) {
-    uploadedImage.value = response.data.url
-    ElMessage.success('文件上传成功')
-    // 文件上传成功后自动调用classifyOcr接口
-    classifyImage(response.data.url)
-  } else {
-    ElMessage.error(response.message || '文件上传失败')
+  if (!response?.success || !response.data) {
+    statusType.value = 'error'
+    statusMessage.value = response?.message || '文件上传失败'
+    ElMessage.error(statusMessage.value)
+    return
   }
+
+  currentFile.value = {
+    ...(currentFile.value || {}),
+    ...response.data,
+    previewUrl: currentFile.value?.previewUrl || '',
+  }
+  imageUrl.value = ''
+  result.value = {}
+  activeStep.value = 1
+  statusType.value = 'success'
+  statusMessage.value = '文件上传成功'
+  ElMessage.success('文件上传成功')
 }
 
-const handleError = (error) => {
+function handleUploadError() {
   uploading.value = false
+  activeStep.value = 0
+  statusType.value = 'error'
+  statusMessage.value = '文件上传失败'
   ElMessage.error('文件上传失败，请重试')
 }
 
-const classifyImage = async (url) => {
-  recognizing.value = true
-  startTime.value = Date.now()
-  recognitionTime.value = 0
+function handleUploadChange(file) {
+  if (file.raw && file.raw.type.startsWith('image/')) {
+    if (currentFile.value?.previewObjectUrl) {
+      URL.revokeObjectURL(currentFile.value.previewObjectUrl)
+    }
+    const previewObjectUrl = URL.createObjectURL(file.raw)
+    currentFile.value = {
+      ...(currentFile.value || {}),
+      originalName: file.name,
+      mimeType: file.raw.type,
+      size: file.raw.size,
+      previewUrl: previewObjectUrl,
+      previewObjectUrl,
+    }
+  }
+}
 
+function useUrlSource() {
+  const url = imageUrl.value.trim()
   try {
-    const response = await classifyOcr({ imageUrl: url })
-    const endTime = Date.now()
-    recognitionTime.value = ((endTime - startTime.value) / 1000).toFixed(2)
-
-    if (response && !response.error) {
-      result.value = response
-      ElMessage.success(`识别完成，耗时 ${recognitionTime.value} 秒`)
-    } else {
-      ElMessage.error('识别失败: ' + (response.error || '未知错误'))
+    const parsed = new URL(url)
+    if (parsed.protocol !== 'https:') {
+      throw new Error('仅支持 HTTPS URL')
     }
   } catch (error) {
-    console.error('识别错误:', error)
-    ElMessage.error('识别失败，请重试')
+    ElMessage.warning(error.message || '请输入有效 URL')
+    return
+  }
+
+  currentFile.value = {
+    id: '',
+    url,
+    originalName: url,
+    mimeType: '',
+    size: 0,
+  }
+  result.value = {}
+  activeStep.value = 1
+  statusType.value = 'info'
+  statusMessage.value = '已选择远程文件'
+}
+
+async function startRecognition() {
+  if (!currentFile.value) {
+    ElMessage.warning('请先上传文件或输入 URL')
+    return
+  }
+
+  recognizing.value = true
+  startTime.value = Date.now()
+  recognitionTime.value = ''
+  activeStep.value = 2
+  statusType.value = 'info'
+  statusMessage.value = '正在分类和识别'
+
+  try {
+    const payload = currentFile.value.id
+      ? { fileId: currentFile.value.id }
+      : { imageUrl: currentFile.value.url }
+    const response = await classifyOcr(payload)
+    result.value = normalizeResult(response)
+    syncCorrectionForm()
+    recognitionTime.value = ((Date.now() - startTime.value) / 1000).toFixed(2)
+    activeStep.value = 4
+    statusType.value = 'success'
+    statusMessage.value = '识别完成'
+    ElMessage.success(`识别完成，耗时 ${recognitionTime.value} 秒`)
+  } catch (error) {
+    activeStep.value = 2
+    statusType.value = 'error'
+    statusMessage.value = error.response?.data?.error || '识别失败'
+    ElMessage.error(statusMessage.value)
   } finally {
     recognizing.value = false
-    // 识别完成后清空上传的文件
-    uploadedImage.value = ''
   }
 }
 
-const recognizeByUrl = async () => {
-  if (!imageUrl.value.trim()) {
-    ElMessage.warning('请输入有效的影像URL地址')
-    return
+function resetWorkspace() {
+  if (currentFile.value?.previewObjectUrl) {
+    URL.revokeObjectURL(currentFile.value.previewObjectUrl)
   }
-
-  // 验证URL格式
-  try {
-    new URL(imageUrl.value)
-  } catch {
-    ElMessage.warning('请输入有效的URL地址')
-    return
-  }
-
-  uploadedImage.value = imageUrl.value
-  await classifyImage(imageUrl.value)
-}
-
-const startRecognition = () => {
-  const url = imageUrl.value.trim()
+  imageUrl.value = ''
+  currentFile.value = null
   result.value = {}
-  if (uploadedImage.value) {
-    classifyImage(uploadedImage.value)
-  } else if (url) {
-    try {
-      new URL(url)
-      classifyImage(url)
-    } catch {
-      ElMessage.error('请输入有效的URL地址')
-    }
-  } else {
-    ElMessage.warning('请先上传图片或输入影像URL')
+  correctionId.value = ''
+  recognitionTime.value = ''
+  activeStep.value = 0
+  statusMessage.value = ''
+  statusType.value = 'info'
+}
+
+onUnmounted(() => {
+  if (currentFile.value?.previewObjectUrl) {
+    URL.revokeObjectURL(currentFile.value.previewObjectUrl)
   }
+})
+
+function formatSize(size) {
+  if (!size) return ''
+  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`
+  return `${(size / 1024 / 1024).toFixed(2)} MB`
 }
 
-const resetTest = () => {
-  uploadedImage.value = ''
-  result.value = null
-  testForm.model = 'general-ocr'
-  testForm.type = 'ocr'
-}
-
-const saveResult = () => {
-  // 实际项目中应该调用API保存结果
-  ElMessage.success('结果已保存到历史记录')
-}
-
-const copyResult = () => {
-  const copyText = JSON.stringify(result.value.ocrInfo, null, 2)
+function copyToClipboard(text, successMessage) {
   navigator.clipboard
-    .writeText(copyText)
-    .then(() => {
-      ElMessage.success('OCR识别结果已复制到剪贴板')
-    })
-    .catch(() => {
-      ElMessage.error('复制失败，请手动复制')
-    })
+    .writeText(text)
+    .then(() => ElMessage.success(successMessage))
+    .catch(() => ElMessage.error('复制失败，请手动复制'))
 }
 
-const getConfidenceClass = (confidence) => {
-  if (confidence >= 90) return 'high-confidence'
-  if (confidence >= 80) return 'medium-confidence'
-  return 'low-confidence'
+function copyText() {
+  copyToClipboard(result.value.ocrText || '', '识别文本已复制')
+}
+
+function copyJson() {
+  copyToClipboard(formattedJson.value, 'JSON 已复制')
+}
+
+function downloadBlob(content, filename, type) {
+  const blob = new Blob([content], { type })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  link.click()
+  URL.revokeObjectURL(url)
+}
+
+function downloadText() {
+  downloadBlob(result.value.ocrText || '', 'ocr-result.txt', 'text/plain;charset=utf-8')
+}
+
+function downloadJson() {
+  downloadBlob(formattedJson.value, 'ocr-result.json', 'application/json;charset=utf-8')
+}
+
+async function saveCorrectionRecord() {
+  const historyId = result.value.id || result.value.historyId
+  if (!historyId) {
+    ElMessage.warning('当前结果暂无可保存的历史记录')
+    return
+  }
+
+  const response = await saveCorrection(historyId, {
+    originalJson: result.value.structuredJson || result.value.ocrInfo || {},
+    correctedJson: { ...correctionForm },
+    status: 'draft',
+  })
+  correctionId.value = response.data?.id || ''
+  result.value.correctedJson = { ...correctionForm }
+  ElMessage.success('校对结果已保存')
+}
+
+async function confirmCorrectionRecord() {
+  if (!correctionId.value) {
+    ElMessage.warning('请先保存校对结果')
+    return
+  }
+  await confirmCorrection(correctionId.value)
+  ElMessage.success('校对结果已确认')
 }
 </script>
 
 <style scoped>
-.test-tools {
-  padding: 20px;
-  max-width: 1200px;
-  margin: 0 auto;
-  width: 100%;
-}
-
-.test-tools h1 {
-  color: #333;
-  margin-bottom: 30px;
-}
-
-.test-methods {
-  margin-bottom: 30px;
-}
-
-.compact-upload {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.upload-tip {
-  font-size: 12px;
-  color: #909399;
-  margin-top: 4px;
-}
-
-.url-input-group {
-  display: flex;
-  align-items: center;
-}
-
-.test-options {
-  background: #f9f9f9;
-  padding: 20px;
-  border-radius: 8px;
-  margin-bottom: 30px;
-}
-
-.test-options h3 {
-  margin-top: 0;
-  margin-bottom: 20px;
-  color: #333;
-}
-
-.result-section {
-  margin-top: 30px;
-}
-
-.result-section h3 {
-  color: #333;
-  margin-bottom: 20px;
-}
-
-.loading-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 40px;
-  color: #909399;
-}
-
-.loading-container .el-icon {
-  margin-right: 8px;
-  animation: rotating 2s linear infinite;
-}
-
-@keyframes rotating {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.result-container {
-  margin-top: 30px;
-  max-width: 1200px;
-  width: 100%;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.result-grid {
+.workspace-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 24px;
-  width: 100%;
+  grid-template-columns: minmax(360px, 430px) minmax(0, 1fr);
+  gap: var(--spacing-lg);
 }
 
-.result-info,
-.ocr-result {
+.panel {
+  padding: var(--spacing-lg);
   min-width: 0;
 }
 
-.ocr-header {
+.panel-title h2,
+.models-list h3 {
+  margin: 0;
+  font-size: var(--font-size-md);
+  color: var(--text-primary);
+}
+
+.panel-subtitle {
+  margin: 6px 0 0;
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.upload-area {
+  margin-bottom: var(--spacing-md);
+}
+
+.upload-area :deep(.el-upload-dragger) {
+  min-height: 184px;
+}
+
+.upload-icon {
+  font-size: 42px;
+  color: var(--primary-color);
+}
+
+.upload-text {
+  color: var(--text-primary);
+  margin-top: var(--spacing-sm);
+}
+
+.upload-tip {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  margin-top: var(--spacing-xs);
+}
+
+.url-row {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.preview-box {
+  border: 1px dashed rgba(36, 85, 214, 0.2);
+  border-radius: 16px;
+  min-height: 280px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+  margin-bottom: var(--spacing-md);
+  background: linear-gradient(180deg, rgba(248, 250, 254, 0.88) 0%, rgba(255, 255, 255, 0.98) 100%);
+}
+
+.image-preview {
+  width: 100%;
+  height: 280px;
+  background: #f5f7fa;
+}
+
+.pdf-preview {
+  height: 280px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  color: var(--text-secondary);
+}
+
+.pdf-preview .el-icon {
+  font-size: 54px;
+  color: var(--primary-color);
+}
+
+.file-meta {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
+  gap: var(--spacing-sm);
+  padding: 14px 16px;
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  border-top: 1px solid rgba(16, 35, 63, 0.08);
 }
 
-.info-card,
-.ocr-content {
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+.file-meta span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.model-info {
-  margin-bottom: 15px;
-  padding: 10px;
-  background-color: #f5f7fa;
-  border-radius: 4px;
+.recognize-button {
+  width: 100%;
 }
 
-.ocr-text pre,
-.ocr-details pre {
-  background: #f5f5f5;
-  padding: 10px;
-  border-radius: 4px;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  font-family: 'Courier New', monospace;
-  font-size: 14px;
-  line-height: 1.5;
-  max-height: 300px;
-  overflow-y: auto;
+.status-steps {
+  max-width: 420px;
 }
 
-@media (max-width: 768px) {
-  .result-grid {
+.status-alert,
+.result-summary,
+.models-list,
+.result-tabs {
+  margin-bottom: var(--spacing-md);
+}
+
+.result-content {
+  min-height: 260px;
+  max-height: 360px;
+  overflow: auto;
+}
+
+.correction-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--spacing-md);
+}
+
+.correction-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(248, 250, 254, 0.92) 0%, rgba(255, 255, 255, 0.98) 100%);
+  border: 1px solid rgba(16, 35, 63, 0.08);
+}
+
+.correction-field label {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.result-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
+@media (max-width: 1024px) {
+  .workspace-grid {
     grid-template-columns: 1fr;
-    gap: 16px;
   }
 
-  .result-info,
-  .ocr-result {
+  .correction-form {
+    grid-template-columns: 1fr;
+  }
+
+  .status-steps {
+    max-width: none;
     width: 100%;
   }
 }
 
-.high-confidence {
-  color: #67c23a;
-}
-
-.medium-confidence {
-  color: #e6a23c;
-}
-
-.low-confidence {
-  color: #f56c6c;
-}
-
-.ocr-text-content pre,
-.json-content {
-  background: #f5f5f5;
-  padding: 10px;
-  border-radius: 4px;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  font-family: 'Courier New', monospace;
-  font-size: 14px;
-  line-height: 1.5;
-  max-height: 330px;
-  overflow-y: auto;
-}
-
-.el-collapse {
-  border: none;
-}
-
-.el-collapse-item__header {
-  font-size: 14px;
-  font-weight: 500;
-  height: 40px;
-  line-height: 40px;
-  background-color: #f5f7fa;
-  padding: 0 12px;
-  border-radius: 4px;
-  margin-bottom: 8px;
-}
-
-.el-collapse-item__content {
-  padding-bottom: 0;
+@media (max-width: 768px) {
+  .panel-title,
+  .url-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }
 </style>

@@ -1,9 +1,14 @@
 <template>
-  <div class="ocr-statistics-container">
+  <div class="page-container ocr-statistics-container">
     <div class="page-header">
-      <div class="page-title">
-        <el-icon class="page-icon"><DataAnalysis /></el-icon>
-        <h1>OCR统计分析</h1>
+      <div>
+        <div class="page-title">
+          <el-icon class="page-icon"><DataAnalysis /></el-icon>
+          <div>
+            <h1>OCR统计分析</h1>
+            <p>从识别总量、日趋势和模型分布快速了解当前运行表现。</p>
+          </div>
+        </div>
       </div>
       <div class="page-actions">
         <el-date-picker
@@ -22,137 +27,112 @@
       </div>
     </div>
 
-    <!-- 数据概览卡片 -->
-    <el-row :gutter="20" class="stats-overview">
-      <el-col :xs="24" :sm="8" :md="8" :lg="8">
-        <el-card class="stats-card app-card" shadow="hover">
-          <div class="stats-card-content">
-            <div class="stats-icon total-icon">
-              <el-icon><Document /></el-icon>
-            </div>
-            <div class="stats-info">
-              <div class="stats-title">总识别数量</div>
-              <div class="stats-value" v-loading="loading">{{ totalRecognitions }}</div>
-              <div class="stats-desc">所有时间内的OCR识别总量</div>
-            </div>
+    <section class="overview-band">
+      <div class="overview-copy">
+        <span class="overview-eyebrow">识别概览</span>
+        <h2>用一个界面看清识别工作量、日常波动和主力模型。</h2>
+      </div>
+      <div class="overview-metrics">
+        <article class="metric-card metric-primary">
+          <div class="metric-head">
+            <span>总识别数量</span>
+            <el-icon><Document /></el-icon>
           </div>
-        </el-card>
-      </el-col>
-      <el-col :xs="24" :sm="8" :md="8" :lg="8">
-        <el-card class="stats-card app-card" shadow="hover">
-          <div class="stats-card-content">
-            <div class="stats-icon today-icon">
-              <el-icon><Calendar /></el-icon>
-            </div>
-            <div class="stats-info">
-              <div class="stats-title">今日识别数量</div>
-              <div class="stats-value" v-loading="loading">{{ todayRecognitions }}</div>
-              <div class="stats-desc">今日完成的OCR识别量</div>
-            </div>
+          <strong>{{ totalRecognitions }}</strong>
+          <p>所有时间内累积的 OCR 识别量</p>
+        </article>
+        <article class="metric-card">
+          <div class="metric-head">
+            <span>今日识别数量</span>
+            <el-icon><Calendar /></el-icon>
           </div>
-        </el-card>
-      </el-col>
-      <el-col :xs="24" :sm="8" :md="8" :lg="8">
-        <el-card class="stats-card app-card" shadow="hover">
-          <div class="stats-card-content">
-            <div class="stats-icon avg-icon">
-              <el-icon><TrendCharts /></el-icon>
-            </div>
-            <div class="stats-info">
-              <div class="stats-title">日均识别数量</div>
-              <div class="stats-value" v-loading="loading">{{ avgDailyRecognitions }}</div>
-              <div class="stats-desc">所选时间段内的日均识别量</div>
-            </div>
+          <strong>{{ todayRecognitions }}</strong>
+          <p>今日已经完成的识别任务</p>
+        </article>
+        <article class="metric-card">
+          <div class="metric-head">
+            <span>日均识别数量</span>
+            <el-icon><TrendCharts /></el-icon>
           </div>
-        </el-card>
-      </el-col>
-    </el-row>
+          <strong>{{ avgDailyRecognitions }}</strong>
+          <p>当前时间区间内的平均日负载</p>
+        </article>
+      </div>
+    </section>
 
-    <!-- 趋势图表 -->
-    <el-row :gutter="20" class="chart-row">
-      <el-col :span="24">
-        <el-card class="chart-card app-card" shadow="hover">
+    <section class="analytics-grid">
+      <el-card class="trend-card">
+        <template #header>
+          <div class="card-header">
+            <div>
+              <span class="card-label">趋势</span>
+              <strong>识别数量走势</strong>
+            </div>
+            <el-radio-group v-model="chartType" size="small" @change="updateChart">
+              <el-radio-button label="line">折线</el-radio-button>
+              <el-radio-button label="bar">柱状</el-radio-button>
+            </el-radio-group>
+          </div>
+        </template>
+        <div class="chart-container" v-loading="loading">
+          <canvas ref="lineChartRef"></canvas>
+        </div>
+      </el-card>
+
+      <div class="analytics-side">
+        <el-card class="distribution-card">
           <template #header>
             <div class="card-header">
-              <span>识别数量趋势</span>
-              <div class="chart-actions">
-                <el-radio-group v-model="chartType" size="small" @change="updateChart">
-                  <el-radio-button label="line">折线图</el-radio-button>
-                  <el-radio-button label="bar">柱状图</el-radio-button>
-                </el-radio-group>
+              <div>
+                <span class="card-label">分布</span>
+                <strong>模型使用构成</strong>
               </div>
+              <el-button text @click="showAllModels = true">
+                <el-icon><View /></el-icon>
+              </el-button>
             </div>
           </template>
-          <div class="chart-container" v-loading="loading">
-            <canvas ref="lineChartRef"></canvas>
-          </div>
-        </el-card>
-      </el-col>
-    </el-row>
-
-    <!-- 模型分析和详细数据 -->
-    <el-row :gutter="20" class="detail-row">
-      <el-col :xs="24" :sm="24" :md="12" :lg="12">
-        <el-card class="model-card app-card" shadow="hover">
-          <template #header>
-            <div class="card-header">
-              <span>模型使用分布</span>
-              <el-tooltip content="查看所有模型" placement="top">
-                <el-button type="text" @click="showAllModels = true">
-                  <el-icon><View /></el-icon>
-                </el-button>
-              </el-tooltip>
-            </div>
-          </template>
-          <div
-            class="model-chart-container"
-            style="width: 300px; margin: 0 auto; margin-top: -40px"
-            v-loading="loading"
-          >
+          <div class="distribution-shell" v-loading="loading">
             <canvas ref="pieChartRef"></canvas>
           </div>
         </el-card>
-      </el-col>
-      <el-col :xs="24" :sm="24" :md="12" :lg="12">
-        <el-card class="top-models-card app-card" shadow="hover">
+
+        <el-card class="ranking-card">
           <template #header>
             <div class="card-header">
-              <span>热门模型排行</span>
-              <el-select
-                style="width: 100px"
-                v-model="topModelCount"
-                size="small"
-                @change="updateTopModelsTable"
-              >
+              <div>
+                <span class="card-label">排行</span>
+                <strong>热门模型</strong>
+              </div>
+              <el-select v-model="topModelCount" size="small" class="ranking-select" @change="updateTopModelsTable">
                 <el-option :value="3" label="Top 3" />
                 <el-option :value="5" label="Top 5" />
                 <el-option :value="10" label="Top 10" />
               </el-select>
             </div>
           </template>
-          <div class="top-models-content" v-loading="loading">
-            <el-table :data="topModels" style="width: 100%" stripe>
-              <el-table-column prop="rank" label="排名" width="80" />
+          <div class="ranking-table" v-loading="loading">
+            <el-table :data="topModels" stripe>
+              <el-table-column prop="rank" label="排名" width="76" />
               <el-table-column prop="name" label="模型名称" />
-              <el-table-column prop="count" label="识别次数" sortable />
-              <el-table-column label="占比" width="120">
+              <el-table-column prop="count" label="次数" width="90" sortable />
+              <el-table-column label="占比" width="138">
                 <template #default="scope">
                   <el-progress
                     :percentage="getModelPercentage(scope.row.count)"
                     :color="getModelColor(scope.row.rank)"
-                    :stroke-width="10"
+                    :stroke-width="8"
                   />
                 </template>
               </el-table-column>
             </el-table>
           </div>
         </el-card>
-      </el-col>
-    </el-row>
+      </div>
+    </section>
 
-    <!-- 所有模型对话框 -->
     <el-dialog v-model="showAllModels" title="所有模型使用统计" width="70%">
-      <el-table :data="allModels" style="width: 100%" height="400px" border>
+      <el-table :data="allModels" height="400px" border>
         <el-table-column prop="rank" label="排名" width="80" />
         <el-table-column prop="name" label="模型名称" />
         <el-table-column prop="count" label="识别次数" sortable />
@@ -161,7 +141,7 @@
             <el-progress
               :percentage="getModelPercentage(scope.row.count)"
               :format="percentageFormat"
-              :stroke-width="10"
+              :stroke-width="8"
             />
           </template>
         </el-table-column>
@@ -171,7 +151,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { Chart, registerables } from 'chart.js'
 import { getSummaryStats } from '@/api/statistics'
 import { ElMessage } from 'element-plus'
@@ -186,11 +166,8 @@ import {
 
 Chart.register(...registerables)
 
-// 图表引用
 const lineChartRef = ref(null)
 const pieChartRef = ref(null)
-
-// 数据状态
 const totalRecognitions = ref(0)
 const todayRecognitions = ref(0)
 const avgDailyRecognitions = ref(0)
@@ -198,16 +175,13 @@ const topModels = ref([])
 const allModels = ref([])
 const loading = ref(true)
 
-// 图表实例
 let trendChartInstance = null
 let pieChartInstance = null
 
-// 图表类型和设置
 const chartType = ref('line')
 const topModelCount = ref(5)
 const showAllModels = ref(false)
 
-// 日期范围
 const today = new Date()
 const lastWeekStart = new Date()
 lastWeekStart.setDate(today.getDate() - 6)
@@ -243,7 +217,6 @@ const dateShortcuts = [
   },
 ]
 
-// 格式化日期
 const formatDate = (date) => {
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')
@@ -251,14 +224,12 @@ const formatDate = (date) => {
   return `${year}-${month}-${day}`
 }
 
-// 处理日期范围变化
 const handleDateRangeChange = () => {
   if (dateRange.value && dateRange.value.length === 2) {
     fetchStatisticsData()
   }
 }
 
-// 获取日期范围
 const getDateRange = () => {
   if (!dateRange.value || dateRange.value.length !== 2) {
     const end = new Date()
@@ -276,7 +247,6 @@ const getDateRange = () => {
   }
 }
 
-// 格式化趋势图表数据
 const formatTrendChartData = (dailyStats) => {
   if (!dailyStats || dailyStats.length === 0) {
     return {
@@ -285,13 +255,13 @@ const formatTrendChartData = (dailyStats) => {
         {
           label: '识别数量',
           data: [],
-          borderColor: 'var(--primary-color)',
-          backgroundColor: 'rgba(22, 119, 255, 0.1)',
-          tension: 0.4,
+          borderColor: '#2455d6',
+          backgroundColor: 'rgba(36, 85, 214, 0.14)',
+          tension: 0.35,
           fill: true,
-          pointBackgroundColor: 'var(--primary-color)',
-          pointRadius: 4,
-          pointHoverRadius: 6,
+          pointBackgroundColor: '#2455d6',
+          pointRadius: 3,
+          pointHoverRadius: 5,
         },
       ],
     }
@@ -313,55 +283,46 @@ const formatTrendChartData = (dailyStats) => {
       {
         label: '识别数量',
         data,
-        borderColor: 'var(--primary-color)',
-        backgroundColor: 'rgba(22, 119, 255, 0.1)',
-        tension: 0.4,
+        borderColor: '#2455d6',
+        backgroundColor: 'rgba(36, 85, 214, 0.14)',
+        tension: 0.35,
         fill: true,
-        pointBackgroundColor: 'var(--primary-color)',
-        pointRadius: 4,
-        pointHoverRadius: 6,
+        pointBackgroundColor: '#2455d6',
+        pointRadius: 3,
+        pointHoverRadius: 5,
       },
     ],
   }
 }
 
-// 格式化饼图数据
 const formatPieChartData = (modelStats) => {
   if (!modelStats || modelStats.length === 0) {
     return {
       labels: [],
-      datasets: [
-        {
-          data: [],
-          backgroundColor: [],
-        },
-      ],
+      datasets: [{ data: [], backgroundColor: [] }],
     }
   }
 
-  // 取前5个模型，其余归为"其他"
-  const topFive = modelStats.sort((a, b) => b.ocr_count - a.ocr_count).slice(0, 5)
-  const otherModels = modelStats.slice(5)
-
+  const sorted = [...modelStats].sort((a, b) => b.ocr_count - a.ocr_count)
+  const topFive = sorted.slice(0, 5)
+  const otherModels = sorted.slice(5)
   const otherCount = otherModels.reduce((sum, model) => sum + model.ocr_count, 0)
 
   const labels = topFive.map((model) => model.model_name || '未知模型')
   const data = topFive.map((model) => model.ocr_count)
 
-  // 如果有"其他"类别，添加到数据中
   if (otherCount > 0) {
     labels.push('其他')
     data.push(otherCount)
   }
 
-  // 饼图颜色
   const backgroundColors = [
-    'rgba(22, 119, 255, 0.8)',
-    'rgba(82, 196, 26, 0.8)',
-    'rgba(250, 173, 20, 0.8)',
-    'rgba(255, 77, 79, 0.8)',
-    'rgba(47, 84, 235, 0.8)',
-    'rgba(144, 147, 153, 0.8)',
+    'rgba(36, 85, 214, 0.88)',
+    'rgba(15, 118, 110, 0.88)',
+    'rgba(183, 121, 31, 0.88)',
+    'rgba(121, 86, 184, 0.88)',
+    'rgba(194, 65, 59, 0.88)',
+    'rgba(110, 127, 153, 0.88)',
   ]
 
   return {
@@ -377,53 +338,25 @@ const formatPieChartData = (modelStats) => {
   }
 }
 
-// 格式化模型数据
-const formatModelData = (modelStats, limit = 3) => {
-  if (!modelStats || modelStats.length === 0) {
-    return []
-  }
-
-  return modelStats
-    .sort((a, b) => b.ocr_count - a.ocr_count)
-    .slice(0, limit)
-    .map((model, index) => ({
-      rank: index + 1,
-      name: model.model_name || '未知模型',
-      count: model.ocr_count,
-    }))
-}
-
-// 获取模型占比百分比
 const getModelPercentage = (count) => {
   if (!totalRecognitions.value || totalRecognitions.value === 0) return 0
   return Math.round((count / totalRecognitions.value) * 100)
 }
 
-// 百分比格式化
-const percentageFormat = (percentage) => {
-  return `${percentage}%`
-}
+const percentageFormat = (percentage) => `${percentage}%`
 
-// 获取模型颜色
 const getModelColor = (rank) => {
   const colors = {
-    1: '#f56c6c', // 第一名：红色
-    2: '#e6a23c', // 第二名：橙色
-    3: '#67c23a', // 第三名：绿色
+    1: '#2455d6',
+    2: '#0f766e',
+    3: '#b7791f',
   }
-  return colors[rank] || '#409eff'
+  return colors[rank] || '#6e7f99'
 }
 
-// 更新图表类型
-const updateChart = () => {
-  if (!trendChartInstance || !lineChartRef.value) return
+const createTrendChart = (chartData) => {
+  if (!lineChartRef.value) return
 
-  trendChartInstance.destroy()
-
-  // 获取当前数据
-  const chartData = trendChartInstance.data
-
-  // 创建新图表
   trendChartInstance = new Chart(lineChartRef.value, {
     type: chartType.value,
     data: chartData,
@@ -433,12 +366,30 @@ const updateChart = () => {
       scales: {
         y: {
           beginAtZero: true,
+          ticks: {
+            color: '#6e7f99',
+          },
+          grid: {
+            color: 'rgba(16, 35, 63, 0.08)',
+          },
+        },
+        x: {
+          ticks: {
+            color: '#6e7f99',
+          },
+          grid: {
+            display: false,
+          },
         },
       },
       plugins: {
         legend: {
           display: true,
           position: 'top',
+          labels: {
+            color: '#10233f',
+            boxWidth: 18,
+          },
         },
         tooltip: {
           mode: 'index',
@@ -449,14 +400,53 @@ const updateChart = () => {
   })
 }
 
-// 更新Top模型表格
+const createPieChart = (pieChartData) => {
+  if (!pieChartRef.value) return
+
+  pieChartInstance = new Chart(pieChartRef.value, {
+    type: 'doughnut',
+    data: pieChartData,
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '62%',
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            boxWidth: 12,
+            padding: 16,
+            color: '#4b5d79',
+          },
+        },
+        tooltip: {
+          callbacks: {
+            label(context) {
+              const label = context.label || ''
+              const value = context.raw || 0
+              const percentage = getModelPercentage(value)
+              return `${label}: ${value} (${percentage}%)`
+            },
+          },
+        },
+      },
+    },
+  })
+}
+
+const updateChart = () => {
+  if (!trendChartInstance || !lineChartRef.value) return
+
+  const chartData = trendChartInstance.data
+  trendChartInstance.destroy()
+  createTrendChart(chartData)
+}
+
 const updateTopModelsTable = () => {
   if (!allModels.value.length) return
-
   topModels.value = allModels.value.slice(0, topModelCount.value)
 }
 
-// 获取统计数据
 const fetchStatisticsData = async () => {
   loading.value = true
   const { startDate, endDate } = getDateRange()
@@ -464,29 +454,23 @@ const fetchStatisticsData = async () => {
   try {
     const response = await getSummaryStats(startDate, endDate)
 
-    // 确保数据存在
     if (!response || !response.dailyStats || !response.totalStats || !response.modelStats) {
       ElMessage.error('获取统计数据失败，数据结构不正确')
       return
     }
 
-    // 解构数据
     const { dailyStats, totalStats, modelStats } = response
 
-    // 更新总计识别数量
     totalRecognitions.value = totalStats.total_ocr_count || 0
 
-    // 计算今日识别数量（如果有今日数据）
     const todayString = formatDate(new Date())
     const todayData = dailyStats.data.find((item) => item.date.includes(todayString))
     todayRecognitions.value = todayData ? todayData.ocr_count : 0
 
-    // 计算日均识别数量
     const totalDays = dailyStats.data.length || 1
     const totalCount = dailyStats.data.reduce((sum, item) => sum + item.ocr_count, 0)
     avgDailyRecognitions.value = Math.round(totalCount / totalDays)
 
-    // 更新所有模型数据
     allModels.value = modelStats.data
       .sort((a, b) => b.ocr_count - a.ocr_count)
       .map((model, index) => ({
@@ -495,86 +479,19 @@ const fetchStatisticsData = async () => {
         count: model.ocr_count,
       }))
 
-    // 更新前N个模型
     topModels.value = allModels.value.slice(0, topModelCount.value)
 
-    // 更新趋势图表
     const trendChartData = formatTrendChartData(dailyStats.data)
-
     if (trendChartInstance) {
       trendChartInstance.destroy()
     }
+    createTrendChart(trendChartData)
 
-    if (lineChartRef.value) {
-      trendChartInstance = new Chart(lineChartRef.value, {
-        type: chartType.value,
-        data: trendChartData,
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            y: {
-              beginAtZero: true,
-              grid: {
-                color: 'rgba(0, 0, 0, 0.05)',
-              },
-            },
-            x: {
-              grid: {
-                display: false,
-              },
-            },
-          },
-          plugins: {
-            legend: {
-              display: true,
-              position: 'top',
-            },
-            tooltip: {
-              mode: 'index',
-              intersect: false,
-            },
-          },
-        },
-      })
-    }
-
-    // 更新饼图
     const pieChartData = formatPieChartData(modelStats.data)
-
     if (pieChartInstance) {
       pieChartInstance.destroy()
     }
-
-    if (pieChartRef.value) {
-      pieChartInstance = new Chart(pieChartRef.value, {
-        type: 'pie',
-        data: pieChartData,
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              position: 'right',
-              labels: {
-                boxWidth: 15,
-                padding: 15,
-              },
-            },
-            tooltip: {
-              callbacks: {
-                label: function (context) {
-                  const label = context.label || ''
-                  const value = context.raw || 0
-                  const percentage = getModelPercentage(value)
-                  return `${label}: ${value} (${percentage}%)`
-                },
-              },
-            },
-          },
-        },
-      })
-    }
+    createPieChart(pieChartData)
   } catch (error) {
     console.error('获取统计数据失败:', error)
     ElMessage.error('获取统计数据失败，请稍后重试')
@@ -586,197 +503,157 @@ const fetchStatisticsData = async () => {
 onMounted(() => {
   fetchStatisticsData()
 })
+
+onUnmounted(() => {
+  if (trendChartInstance) {
+    trendChartInstance.destroy()
+    trendChartInstance = null
+  }
+  if (pieChartInstance) {
+    pieChartInstance.destroy()
+    pieChartInstance = null
+  }
+})
 </script>
 
 <style scoped>
-.ocr-statistics-container {
-  padding: var(--spacing-lg);
+.overview-band {
+  display: grid;
+  grid-template-columns: minmax(320px, 1.1fr) minmax(0, 1.7fr);
+  gap: 20px;
+  padding: 24px;
+  margin-bottom: 24px;
+  border-radius: 28px;
+  background: linear-gradient(145deg, #f8fbff 0%, #eef3fb 100%);
+  border: 1px solid rgba(36, 85, 214, 0.08);
+  box-shadow: var(--shadow-sm);
 }
 
-.page-header {
+.overview-copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.overview-eyebrow,
+.card-label {
+  display: inline-flex;
+  margin-bottom: 10px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+.overview-copy h2 {
+  margin: 0;
+  font-size: 32px;
+  line-height: 1.2;
+  color: var(--text-primary);
+}
+
+.overview-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.metric-card {
+  min-height: 176px;
+  padding: 20px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(16, 35, 63, 0.06);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: var(--shadow-xs);
+}
+
+.metric-primary {
+  background: linear-gradient(180deg, #2557da 0%, #1a459b 100%);
+  color: #ffffff;
+  box-shadow: 0 22px 46px rgba(36, 85, 214, 0.18);
+}
+
+.metric-head {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--spacing-lg);
+  gap: 12px;
+  color: inherit;
 }
 
-.page-title {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-md);
+.metric-head span {
+  font-size: 13px;
+  color: inherit;
+  opacity: 0.8;
 }
 
-.page-icon {
-  font-size: 24px;
-  color: var(--primary-color);
-  background-color: var(--primary-light);
-  padding: var(--spacing-sm);
-  border-radius: 50%;
+.metric-head .el-icon {
+  font-size: 18px;
 }
 
-.page-title h1 {
-  font-size: var(--font-size-xl);
-  font-weight: 600;
-  color: var(--text-primary);
+.metric-card strong {
+  font-size: 34px;
+  line-height: 1.1;
+  color: inherit;
+}
+
+.metric-card p {
   margin: 0;
+  color: inherit;
+  opacity: 0.72;
+  line-height: 1.6;
 }
 
-.page-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-md);
+.analytics-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(360px, 0.95fr);
+  gap: 20px;
 }
 
-/* 数据概览卡片 */
-.stats-overview {
-  margin-bottom: var(--spacing-lg);
+.analytics-side {
+  display: grid;
+  grid-template-rows: minmax(320px, 1fr) minmax(360px, 1fr);
+  gap: 20px;
 }
 
-.stats-card {
-  height: 140px;
-  margin-bottom: var(--spacing-md);
-  transition: transform var(--transition-fast);
-}
-
-.stats-card:hover {
-  transform: translateY(-5px);
-}
-
-.stats-card-content {
-  height: 100%;
-  display: flex;
-  align-items: center;
-  padding: var(--spacing-md);
-}
-
-.stats-icon {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: var(--spacing-lg);
-  font-size: 24px;
-}
-
-.total-icon {
-  background-color: var(--primary-light);
-  color: var(--primary-color);
-}
-
-.today-icon {
-  background-color: rgba(82, 196, 26, 0.1);
-  color: #52c41a;
-}
-
-.avg-icon {
-  background-color: rgba(250, 173, 20, 0.1);
-  color: #faad14;
-}
-
-.stats-info {
-  flex: 1;
-}
-
-.stats-title {
-  font-size: var(--font-size-md);
-  color: var(--text-secondary);
-  margin-bottom: var(--spacing-xs);
-}
-
-.stats-value {
-  font-size: 28px;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: var(--spacing-xs);
-}
-
-.stats-desc {
-  font-size: var(--font-size-sm);
-  color: var(--text-light);
-}
-
-/* 图表样式 */
-.chart-row {
-  margin-bottom: var(--spacing-lg);
-}
-
-.chart-card {
-  height: 400px;
-}
-
-.chart-container {
-  height: 320px;
-  position: relative;
+.trend-card,
+.distribution-card,
+.ranking-card {
+  border-radius: 26px;
 }
 
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-weight: 500;
+  gap: 16px;
 }
 
-.chart-actions {
-  display: flex;
-  align-items: center;
+.card-header strong {
+  display: block;
+  font-size: 18px;
+  color: var(--text-primary);
 }
 
-/* 详细数据行 */
-.detail-row {
-  margin-bottom: var(--spacing-lg);
+.chart-container {
+  height: 420px;
+  position: relative;
 }
 
-.model-card {
-  height: 400px;
-}
-
-.model-chart-container {
+.distribution-shell {
   height: 320px;
   position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
-.top-models-card {
-  height: 400px;
+.ranking-select {
+  width: 112px;
 }
 
-.top-models-content {
-  height: 320px;
-  overflow-y: auto;
-}
-
-/* 响应式调整 */
-@media (max-width: 768px) {
-  .page-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--spacing-md);
-  }
-
-  .page-actions {
-    width: 100%;
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .stats-card {
-    margin-bottom: var(--spacing-md);
-  }
-
-  .chart-card,
-  .model-card,
-  .top-models-card {
-    height: auto;
-    margin-bottom: var(--spacing-lg);
-  }
-
-  .chart-container,
-  .model-chart-container {
-    height: 250px;
-  }
+.ranking-table {
+  max-height: 360px;
+  overflow: auto;
 }
 </style>

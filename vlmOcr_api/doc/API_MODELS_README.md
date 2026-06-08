@@ -26,7 +26,7 @@
       "description": "工资单识别模型",
       "keyWords": [...],
       "glmTips": "...",
-      "moreApi": "GLM-4.1V-Thinking-Flash"
+      "moreApi": "GLM-4.6V-Flash"
     }
   ],
   "message": "获取模型列表成功"
@@ -47,7 +47,7 @@
     "description": "工资单识别模型",
     "keyWords": [...],
     "glmTips": "...",
-    "moreApi": "GLM-4.1V-Thinking-Flash"
+      "moreApi": "GLM-4.6V-Flash"
   },
   "message": "获取模型成功"
 }

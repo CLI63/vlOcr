@@ -1,9 +1,10 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { MySQLHelper } = require('../utils/mysql');
+const config = require('../config/appConfig');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'vlm_ocr_secret_key';
-const JWT_EXPIRES_IN = '24h';
+const JWT_SECRET = config.jwtSecret;
+const JWT_EXPIRES_IN = config.jwtExpiresIn;
 
 class AuthService {
     // 用户注册
@@ -29,7 +30,8 @@ class AuthService {
         const userData = {
             username,
             password: hashedPassword,
-            email
+            email,
+            role: 'user'
         };
 
         const result = await MySQLHelper.insert('users', userData);
@@ -62,7 +64,8 @@ class AuthService {
             user: {
                 id: user.id,
                 username: user.username,
-                email: user.email
+                email: user.email,
+                role: user.role || 'user'
             }
         };
     }
@@ -156,7 +159,7 @@ class AuthService {
         }
 
         // 更新用户信息
-        const result = await MySQLHelper.update('users', { id: userId }, filteredData);
+        const result = await MySQLHelper.update('users', filteredData, { id: userId });
         if (result.affectedRows === 0) {
             throw new Error('用户信息更新失败');
         }
@@ -191,7 +194,7 @@ class AuthService {
 
     // 获取所有用户列表
     static async getAllUsers() {
-        const query = 'SELECT id, username, email, created_at FROM users ORDER BY created_at DESC';
+        const query = 'SELECT id, username, email, role, created_at FROM users ORDER BY created_at DESC';
         const users = await MySQLHelper.query(query);
         return users;
     }

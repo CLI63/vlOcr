@@ -20,6 +20,7 @@ CREATE TABLE img_history (
     modelName VARCHAR(100),
     allModel TEXT,
     ocrInfo TEXT,
+    user_id INT(11) NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
@@ -49,6 +50,7 @@ CREATE TABLE model_keywords (
 -- 为常用查询字段添加索引
 CREATE INDEX idx_img_history_fileMd5 ON img_history(fileMd5);
 CREATE INDEX idx_img_history_created_at ON img_history(created_at);
+CREATE INDEX idx_img_history_user_id ON img_history(user_id);
 CREATE INDEX idx_model_keywords_keyword_text ON model_keywords(keyword_text);
 
 -- 插入默认模型数据（可选）
@@ -62,6 +64,7 @@ CREATE TABLE users (
     username VARCHAR(50) NOT NULL,
     password VARCHAR(255) NOT NULL,
     email VARCHAR(100),
+    role VARCHAR(20) NOT NULL DEFAULT 'user',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NULL DEFAULT NULL,
     PRIMARY KEY (id),
@@ -77,5 +80,5 @@ INSERT INTO model_keywords (model_id, keyword_text, keyword_index) VALUES
 ('default-2', 'Excel', 2);
 
 -- 插入默认管理员用户（可选）
-INSERT INTO users (username, password, email) VALUES
-('admin', '$2b$10$X6KaDTDeewaTmkczXeGps.bTT9mQHSKgvXjFjxvO/9I/3Y4kTzFve', 'admin@example.com');
+INSERT INTO users (username, password, email, role) VALUES
+('admin', '$2b$10$X6KaDTDeewaTmkczXeGps.bTT9mQHSKgvXjFjxvO/9I/3Y4kTzFve', 'admin@example.com', 'admin');

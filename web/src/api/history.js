@@ -20,6 +20,13 @@ export function getHistoryList(params) {
   })
 }
 
+export function getHistoryDetail(id) {
+  return request({
+    url: `${BASE_URL}/${id}`,
+    method: 'get',
+  })
+}
+
 /**
  * 删除历史记录
  * @param {string} fileMd5 - 文件MD5值

@@ -35,6 +35,17 @@ const router = createRouter({
           component: () => import('../views/HistoryRecordsView.vue'),
         },
         {
+          path: 'tasks',
+          name: 'tasks',
+          component: () => import('../views/TaskManagementView.vue'),
+        },
+        {
+          path: 'templates',
+          name: 'templates',
+          component: () => import('../views/TemplateManagementView.vue'),
+          meta: { requiresAdmin: true },
+        },
+        {
           path: 'test',
           name: 'test',
           component: () => import('../views/TestToolsView.vue'),
@@ -48,6 +59,7 @@ const router = createRouter({
           path: 'users',
           name: 'users',
           component: () => import('../views/UserManagementView.vue'),
+          meta: { requiresAdmin: true },
         },
         {
           path: '',
@@ -61,10 +73,18 @@ const router = createRouter({
 // 路由守卫
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('token')
+  let user = {}
+  try {
+    user = JSON.parse(localStorage.getItem('user') || '{}')
+  } catch {
+    user = {}
+  }
 
   if (to.matched.some((record) => record.meta.requiresAuth)) {
     if (!token) {
       next('/login')
+    } else if (to.matched.some((record) => record.meta.requiresAdmin) && user.role !== 'admin') {
+      next('/dashboard/models')
     } else {
       next()
     }

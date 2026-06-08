@@ -1,37 +1,45 @@
 <template>
   <div class="login-container">
-    <div class="login-content">
-      <div class="login-left">
-        <div class="login-banner">
-          <div class="banner-content">
-            <h1>OCR智能识别系统</h1>
-            <p>高效、准确的文字识别解决方案</p>
-            <div class="banner-features">
-              <div class="feature-item">
-                <el-icon><Document /></el-icon>
-                <span>多模型支持</span>
-              </div>
-              <div class="feature-item">
-                <el-icon><DataAnalysis /></el-icon>
-                <span>数据分析</span>
-              </div>
-              <div class="feature-item">
-                <el-icon><Histogram /></el-icon>
-                <span>实时统计</span>
-              </div>
+    <div class="login-scene">
+      <section class="login-stage">
+        <div class="login-hero">
+          <div class="hero-badge">OCR 管理后台</div>
+          <h1>把识别、校对、统计和模型配置收进一个稳定的工作台。</h1>
+          <p>
+            面向日常业务流转设计，帮助团队持续追踪识别结果、批量任务和模型表现。
+          </p>
+
+          <div class="hero-grid">
+            <div class="hero-card">
+              <span>多模型识别</span>
+              <strong>统一接入</strong>
+            </div>
+            <div class="hero-card">
+              <span>历史归档</span>
+              <strong>结构化追溯</strong>
+            </div>
+            <div class="hero-card">
+              <span>批量任务</span>
+              <strong>状态可见</strong>
+            </div>
+            <div class="hero-card">
+              <span>统计分析</span>
+              <strong>趋势与分布</strong>
             </div>
           </div>
         </div>
-      </div>
-      <div class="login-right">
-        <div class="login-form-container">
-          <div class="login-header">
-            <div class="login-logo">
-              <el-icon class="logo-icon"><Monitor /></el-icon>
+
+        <div class="login-panel">
+          <div class="panel-mark">
+            <div class="panel-logo">
+              <el-icon><Monitor /></el-icon>
             </div>
-            <h2>OCR后台管理系统</h2>
-            <p>欢迎回来，请登录您的账号</p>
+            <div>
+              <h2>欢迎登录</h2>
+              <p>请输入你的后台账号信息</p>
+            </div>
           </div>
+
           <el-form
             ref="loginFormRef"
             :model="form"
@@ -40,36 +48,41 @@
             class="login-form"
           >
             <el-form-item prop="username">
-              <el-input v-model="form.username" placeholder="请输入用户名" prefix-icon="User" />
+              <el-input v-model="form.username" placeholder="请输入用户名">
+                <template #prepend>
+                  <el-icon><User /></el-icon>
+                </template>
+              </el-input>
             </el-form-item>
             <el-form-item prop="password">
-              <el-input
-                v-model="form.password"
-                type="password"
-                placeholder="请输入密码"
-                prefix-icon="Lock"
-                show-password
-              />
+              <el-input v-model="form.password" type="password" placeholder="请输入密码" show-password>
+                <template #prepend>
+                  <el-icon><Lock /></el-icon>
+                </template>
+              </el-input>
             </el-form-item>
+
             <div class="login-options">
               <el-checkbox v-model="rememberMe">记住我</el-checkbox>
-              <a href="#" class="forgot-password">忘记密码?</a>
+              <button type="button" class="secondary-link">账号协助</button>
             </div>
+
             <el-button
               type="primary"
               native-type="submit"
               class="login-btn"
               :loading="loading.value"
-              round
             >
-              {{ loading.value ? '登录中...' : '登录' }}
+              {{ loading.value ? '正在登录' : '进入工作台' }}
             </el-button>
           </el-form>
-          <div class="login-footer">
-            <p>© {{ new Date().getFullYear() }} OCR管理系统 版权所有</p>
+
+          <div class="login-footnote">
+            <span>当前系统支持模型管理、模板配置、历史追溯与批量任务。</span>
+            <small>© {{ new Date().getFullYear() }} OCR 管理系统</small>
           </div>
         </div>
-      </div>
+      </section>
     </div>
   </div>
 </template>
@@ -79,7 +92,7 @@ import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { login } from '@/api/auth'
-import { Document, DataAnalysis, Histogram, Monitor, User, Lock } from '@element-plus/icons-vue'
+import { Monitor, User, Lock } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const loginFormRef = ref(null)
@@ -92,7 +105,6 @@ const loading = reactive({
 })
 const rememberMe = ref(false)
 
-// 表单验证规则
 const rules = {
   username: [
     { required: true, message: '请输入用户名', trigger: 'blur' },
@@ -119,14 +131,10 @@ const handleLogin = async () => {
         password: form.password,
       })
 
-      // 根据API文档，成功登录会返回token和user信息
       if (response.token && response.user) {
-        // 保存token到localStorage
         localStorage.setItem('token', response.token)
-        // 保存用户信息
         localStorage.setItem('user', JSON.stringify(response.user))
 
-        // 如果选择了记住我，可以设置一个更长的过期时间
         if (rememberMe.value) {
           localStorage.setItem('rememberMe', 'true')
         }
@@ -137,18 +145,14 @@ const handleLogin = async () => {
           duration: 2000,
         })
 
-        // 跳转到仪表板页面
         router.push('/dashboard/ocr-statistics')
       } else {
-        // 处理API返回的错误信息
         ElMessage.error(response.error || '登录失败，请检查用户名和密码')
       }
     } catch (error) {
       console.error('登录错误:', error)
 
-      // 更详细的错误处理
       if (error.response) {
-        // 服务器返回了错误状态码
         const { status, data } = error.response
         if (status === 401) {
           ElMessage.error('用户名或密码错误')
@@ -158,10 +162,8 @@ const handleLogin = async () => {
           ElMessage.error(data.error || '服务器错误')
         }
       } else if (error.request) {
-        // 请求已发出但没有收到响应
         ElMessage.error('无法连接到服务器，请确保API服务器正在运行')
       } else {
-        // 其他错误
         ElMessage.error('登录失败，请检查网络连接')
       }
     } finally {
@@ -173,169 +175,203 @@ const handleLogin = async () => {
 
 <style scoped>
 .login-container {
-  height: 100vh;
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: var(--bg-layout);
+  min-height: 100vh;
+  padding: 24px;
+  background:
+    radial-gradient(circle at top left, rgba(36, 85, 214, 0.14), transparent 24%),
+    radial-gradient(circle at bottom right, rgba(15, 118, 110, 0.1), transparent 28%),
+    linear-gradient(180deg, #eff4fa 0%, #e8eef6 100%);
+}
+
+.login-scene {
+  min-height: calc(100vh - 48px);
+  border-radius: 32px;
+  padding: 20px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.42) 0%, rgba(255, 255, 255, 0.22) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 26px 70px rgba(13, 27, 51, 0.08);
+}
+
+.login-stage {
+  min-height: calc(100vh - 88px);
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(380px, 470px);
+  gap: 24px;
+}
+
+.login-hero,
+.login-panel {
+  border-radius: 28px;
   overflow: hidden;
 }
 
-.login-content {
+.login-hero {
+  padding: 52px 56px;
+  background:
+    radial-gradient(circle at 18% 16%, rgba(255, 255, 255, 0.1), transparent 28%),
+    linear-gradient(145deg, #122846 0%, #17375e 52%, #1c4271 100%);
+  color: #ffffff;
   display: flex;
-  width: 80%;
-  max-width: 1200px;
-  height: 80vh;
-  max-height: 700px;
-  border-radius: var(--border-radius-lg);
-  box-shadow: var(--shadow-lg);
-  overflow: hidden;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
 }
 
-.login-left {
-  flex: 1;
-  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-active) 100%);
-  display: none;
+.login-hero::after {
+  content: '';
+  position: absolute;
+  inset: auto 32px 32px auto;
+  width: 220px;
+  height: 220px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.12), transparent 62%);
+  pointer-events: none;
 }
 
-.login-banner {
-  height: 100%;
+.hero-badge {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.login-hero h1 {
+  max-width: 720px;
+  margin: 28px 0 18px;
+  font-size: clamp(42px, 4vw, 60px);
+  line-height: 1.04;
+  letter-spacing: 0;
+}
+
+.login-hero p {
+  max-width: 560px;
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.8;
+  color: rgba(240, 245, 253, 0.76);
+}
+
+.hero-grid {
+  margin-top: 40px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.hero-card {
+  padding: 18px 20px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+}
+
+.hero-card span {
+  display: block;
+  margin-bottom: 8px;
+  color: rgba(240, 245, 253, 0.7);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.hero-card strong {
+  font-size: 18px;
+  line-height: 1.3;
+}
+
+.login-panel {
+  padding: 34px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, #ffffff 100%);
+  border: 1px solid rgba(16, 35, 63, 0.08);
+  box-shadow: 0 24px 56px rgba(16, 35, 63, 0.1);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.panel-mark {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 34px;
+}
+
+.panel-logo {
+  width: 58px;
+  height: 58px;
+  border-radius: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
-  padding: var(--spacing-xl);
-}
-
-.banner-content {
-  max-width: 400px;
-}
-
-.banner-content h1 {
-  font-size: 2.5rem;
-  font-weight: 700;
-  margin-bottom: var(--spacing-lg);
-}
-
-.banner-content p {
-  font-size: var(--font-size-lg);
-  margin-bottom: var(--spacing-xl);
-  opacity: 0.9;
-}
-
-.banner-features {
-  margin-top: var(--spacing-xl);
-}
-
-.feature-item {
-  display: flex;
-  align-items: center;
-  margin-bottom: var(--spacing-md);
-}
-
-.feature-item .el-icon {
-  margin-right: var(--spacing-md);
-  font-size: var(--font-size-lg);
-  background: rgba(255, 255, 255, 0.2);
-  padding: var(--spacing-sm);
-  border-radius: 50%;
-}
-
-.login-right {
-  flex: 1;
-  background-color: var(--bg-container);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.login-form-container {
-  width: 100%;
-  max-width: 400px;
-  padding: var(--spacing-xl);
-}
-
-.login-header {
-  text-align: center;
-  margin-bottom: var(--spacing-xl);
-}
-
-.login-logo {
-  display: flex;
-  justify-content: center;
-  margin-bottom: var(--spacing-md);
-}
-
-.logo-icon {
-  font-size: 2rem;
+  background: linear-gradient(180deg, #eff4ff 0%, #dfe8fb 100%);
   color: var(--primary-color);
-  background-color: var(--primary-light);
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  font-size: 24px;
+  border: 1px solid rgba(36, 85, 214, 0.14);
 }
 
-.login-header h2 {
-  font-size: var(--font-size-xl);
-  font-weight: 600;
+.panel-mark h2 {
+  margin: 0 0 6px;
+  font-size: 28px;
+  line-height: 1.15;
   color: var(--text-primary);
-  margin-bottom: var(--spacing-sm);
 }
 
-.login-header p {
+.panel-mark p {
+  margin: 0;
   color: var(--text-secondary);
-  font-size: var(--font-size-md);
 }
 
 .login-form {
-  margin-bottom: var(--spacing-xl);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .login-options {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--spacing-lg);
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
 }
 
-.forgot-password {
+.secondary-link {
+  padding: 0;
+  border: none;
+  background: transparent;
   color: var(--primary-color);
-  font-size: var(--font-size-sm);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
 }
 
 .login-btn {
   width: 100%;
-  height: 44px;
-  font-size: var(--font-size-md);
-  font-weight: 500;
+  min-height: 46px;
+  margin-top: 10px;
 }
 
-.login-footer {
-  text-align: center;
-  color: var(--text-light);
-  font-size: var(--font-size-xs);
-  margin-top: var(--spacing-xl);
+.login-footnote {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 32px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(16, 35, 63, 0.08);
+  color: var(--text-secondary);
+  font-size: 13px;
 }
 
-/* 响应式调整 */
-@media (min-width: 768px) {
-  .login-left {
-    display: block;
-  }
-}
-
-@media (max-width: 767px) {
-  .login-content {
-    width: 90%;
-    height: auto;
-  }
-
-  .login-form-container {
-    padding: var(--spacing-lg);
-  }
+.login-footnote small {
+  color: var(--text-tertiary);
 }
 </style>

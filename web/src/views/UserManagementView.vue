@@ -1,9 +1,12 @@
 <template>
-  <div class="user-management-container">
+  <div class="page-container user-management-container">
     <div class="page-header">
       <div class="page-title">
         <el-icon class="page-icon"><UserFilled /></el-icon>
-        <h1>用户管理</h1>
+        <div>
+          <h1>用户管理</h1>
+          <p class="page-subtitle">维护后台账号、角色信息与基础访问成员列表。</p>
+        </div>
       </div>
       <div class="page-actions">
         <el-input
@@ -18,6 +21,21 @@
           <el-icon><Plus /></el-icon>
           添加用户
         </el-button>
+      </div>
+    </div>
+
+    <div class="user-summary">
+      <div class="summary-card surface-card">
+        <span>用户总数</span>
+        <strong>{{ totalUsers }}</strong>
+      </div>
+      <div class="summary-card surface-card">
+        <span>管理员</span>
+        <strong>{{ adminCount }}</strong>
+      </div>
+      <div class="summary-card surface-card">
+        <span>普通用户</span>
+        <strong>{{ normalUserCount }}</strong>
       </div>
     </div>
 
@@ -52,7 +70,7 @@
 
       <!-- 用户列表 -->
       <el-table
-        :data="filteredUserList"
+        :data="pagedUserList"
         style="width: 100%"
         v-loading="loading"
         row-key="id"
@@ -71,6 +89,13 @@
           </template>
         </el-table-column>
         <el-table-column prop="email" label="邮箱" v-if="tableSettings.showEmail" />
+        <el-table-column prop="role" label="角色" width="100">
+          <template #default="scope">
+            <el-tag :type="scope.row.role === 'admin' ? 'warning' : 'info'" size="small" effect="plain">
+              {{ scope.row.role === 'admin' ? '管理员' : '普通用户' }}
+            </el-tag>
+          </template>
+        </el-table-column>
         <el-table-column
           prop="created_at"
           label="创建时间"
@@ -81,13 +106,6 @@
             <el-tooltip :content="formatFullDate(scope.row.created_at)" placement="top">
               {{ formatDate(scope.row.created_at) }}
             </el-tooltip>
-          </template>
-        </el-table-column>
-        <el-table-column prop="status" label="状态" width="100">
-          <template #default="scope">
-            <el-tag :type="scope.row.status === 'active' ? 'success' : 'danger'" size="small">
-              {{ scope.row.status === 'active' ? '正常' : '禁用' }}
-            </el-tag>
           </template>
         </el-table-column>
         <el-table-column label="操作" width="200" fixed="right">
@@ -140,15 +158,6 @@
             show-password
           />
         </el-form-item>
-        <el-form-item label="状态" prop="status">
-          <el-switch
-            v-model="userForm.status"
-            active-value="active"
-            inactive-value="disabled"
-            active-text="正常"
-            inactive-text="禁用"
-          />
-        </el-form-item>
       </el-form>
       <template #footer>
         <span class="dialog-footer">
@@ -173,10 +182,8 @@
           <el-descriptions-item label="创建时间">{{
             formatFullDate(selectedUser.created_at)
           }}</el-descriptions-item>
-          <el-descriptions-item label="状态">
-            <el-tag :type="selectedUser.status === 'active' ? 'success' : 'danger'">
-              {{ selectedUser.status === 'active' ? '正常' : '禁用' }}
-            </el-tag>
+          <el-descriptions-item label="角色">
+            {{ selectedUser.role === 'admin' ? '管理员' : '普通用户' }}
           </el-descriptions-item>
         </el-descriptions>
         <div class="user-detail-actions">
@@ -197,7 +204,6 @@ import { register, updateUser, deleteUser, getUserList } from '@/api/auth'
 // 用户列表数据
 const userList = ref([])
 const loading = ref(false)
-const totalUsers = ref(0)
 const pageSize = ref(10)
 const currentPage = ref(1)
 const searchQuery = ref('')
@@ -252,9 +258,19 @@ const filteredUserList = computed(() => {
   const query = searchQuery.value.toLowerCase()
   return userList.value.filter(
     (user) =>
-      user.username.toLowerCase().includes(query) || user.email.toLowerCase().includes(query),
+      (user.username || '').toLowerCase().includes(query) ||
+      (user.email || '').toLowerCase().includes(query),
   )
 })
+
+const pagedUserList = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  return filteredUserList.value.slice(start, start + pageSize.value)
+})
+
+const totalUsers = computed(() => filteredUserList.value.length)
+const adminCount = computed(() => userList.value.filter((user) => user.role === 'admin').length)
+const normalUserCount = computed(() => userList.value.filter((user) => user.role !== 'admin').length)
 
 // 格式化日期 (简短版本)
 const formatDate = (dateString) => {
@@ -294,10 +310,8 @@ const fetchUserList = async () => {
     // 添加状态字段（实际项目中可能已经包含此字段）
     userList.value = users.map((user) => ({
       ...user,
-      status: user.status || 'active', // 默认为激活状态
     }))
 
-    totalUsers.value = userList.value.length
   } catch (error) {
     console.error('获取用户列表失败:', error)
     ElMessage.error('获取用户列表失败')
@@ -320,7 +334,6 @@ const showEditUserDialog = (user) => {
     id: user.id,
     username: user.username,
     email: user.email,
-    status: user.status || 'active',
     password: '', // 编辑时不显示密码
   })
   dialogVisible.value = true
@@ -338,7 +351,6 @@ const resetForm = () => {
     username: '',
     email: '',
     password: '',
-    status: 'active',
   })
   if (userFormRef.value) {
     userFormRef.value.resetFields()
@@ -358,7 +370,6 @@ const handleSubmitUser = async () => {
           await updateUser(userForm.id, {
             username: userForm.username,
             email: userForm.email,
-            status: userForm.status,
           })
           ElMessage({
             type: 'success',
@@ -371,7 +382,6 @@ const handleSubmitUser = async () => {
             username: userForm.username,
             email: userForm.email,
             password: userForm.password,
-            status: userForm.status,
           })
           ElMessage({
             type: 'success',
@@ -451,13 +461,12 @@ const handleSearch = () => {
 // 处理分页大小变化
 const handleSizeChange = (size) => {
   pageSize.value = size
-  fetchUserList()
+  currentPage.value = 1
 }
 
 // 处理页码变化
 const handleCurrentChange = (page) => {
   currentPage.value = page
-  fetchUserList()
 }
 
 // 页面加载时获取用户列表
@@ -467,46 +476,33 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.user-management-container {
-  padding: var(--spacing-lg);
+.search-input {
+  width: 240px;
 }
 
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.user-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--spacing-md);
   margin-bottom: var(--spacing-lg);
 }
 
-.page-title {
+.summary-card {
+  padding: 18px 20px;
   display: flex;
-  align-items: center;
-  gap: var(--spacing-md);
+  flex-direction: column;
+  gap: 8px;
 }
 
-.page-icon {
-  font-size: 24px;
-  color: var(--primary-color);
-  background-color: var(--primary-light);
-  padding: var(--spacing-sm);
-  border-radius: 50%;
+.summary-card span {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
 }
 
-.page-title h1 {
-  font-size: var(--font-size-xl);
-  font-weight: 600;
+.summary-card strong {
+  font-size: 28px;
+  line-height: 1;
   color: var(--text-primary);
-  margin: 0;
-}
-
-.page-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-md);
-}
-
-.search-input {
-  width: 240px;
 }
 
 .user-management-card {
@@ -546,7 +542,7 @@ onMounted(() => {
 }
 
 .user-detail {
-  padding: var(--spacing-md);
+  padding: var(--spacing-xs);
 }
 
 .user-detail-header {
@@ -577,18 +573,9 @@ onMounted(() => {
 
 /* 响应式调整 */
 @media (max-width: 768px) {
-  .page-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--spacing-md);
-  }
-
-  .page-actions {
-    width: 100%;
-  }
-
+  .user-summary,
   .search-input {
-    flex: 1;
+    width: 100%;
   }
 }
 </style>

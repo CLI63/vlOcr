@@ -1,28 +1,56 @@
 <template>
-  <div class="profile-container">
-    <el-card class="profile-card">
-      <!-- <template #header>
-        <div class="card-header">
-          <span>个人中心</span>
+  <div class="page-container profile-container">
+    <div class="page-header">
+      <div class="page-title">
+        <el-icon class="page-icon"><User /></el-icon>
+        <div>
+          <h1>个人中心</h1>
+          <p class="page-subtitle">查看当前账号信息，并维护登录密码与基础身份资料。</p>
         </div>
-      </template> -->
+      </div>
+    </div>
 
-      <!-- 个人信息部分 -->
-      <div class="profile-section">
-        <h3>个人信息</h3>
+    <div class="profile-grid">
+      <el-card class="profile-card profile-summary-card app-card">
+        <div class="profile-summary">
+          <el-avatar :size="72" class="profile-avatar">
+            {{ (userInfo.username || 'U').slice(0, 1).toUpperCase() }}
+          </el-avatar>
+          <div>
+            <h2>{{ userInfo.username || '未命名用户' }}</h2>
+            <p>{{ userInfo.email || '未设置邮箱' }}</p>
+          </div>
+        </div>
+
+        <div class="profile-meta">
+          <div class="meta-item">
+            <span>角色</span>
+            <strong>{{ userInfo.role || '用户' }}</strong>
+          </div>
+          <div class="meta-item">
+            <span>创建时间</span>
+            <strong>{{ formatDate(userInfo.created_at || userInfo.createdAt) }}</strong>
+          </div>
+        </div>
+
         <el-descriptions :column="1" border>
           <el-descriptions-item label="用户名">{{ userInfo.username }}</el-descriptions-item>
           <el-descriptions-item label="邮箱">{{ userInfo.email || '未设置' }}</el-descriptions-item>
           <el-descriptions-item label="角色">{{ userInfo.role || '用户' }}</el-descriptions-item>
           <el-descriptions-item label="创建时间">{{
-            formatDate(userInfo.createdAt)
+            formatDate(userInfo.created_at || userInfo.createdAt)
           }}</el-descriptions-item>
         </el-descriptions>
-      </div>
+      </el-card>
 
-      <!-- 修改密码部分 -->
-      <div class="profile-section">
-        <h3>修改密码</h3>
+      <el-card class="profile-card app-card">
+        <div class="section-head">
+          <div>
+            <h3>修改密码</h3>
+            <p>更新当前登录密码，建议使用长度更长的组合密码。</p>
+          </div>
+        </div>
+
         <el-form
           ref="passwordFormRef"
           :model="passwordForm"
@@ -60,14 +88,15 @@
             </el-button>
           </el-form-item>
         </el-form>
-      </div>
-    </el-card>
+      </el-card>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
+import { User } from '@element-plus/icons-vue'
 import { getUserInfo, changePassword } from '@/api/auth'
 
 // 用户信息 - 使用ref而不是reactive，避免组件重新创建时重置
@@ -75,7 +104,7 @@ const userInfo = ref({
   username: '',
   email: '',
   role: '',
-  createdAt: '',
+  created_at: '',
 })
 
 // 从localStorage初始化用户信息
@@ -147,11 +176,11 @@ const fetchUserInfo = async () => {
     const response = await getUserInfo()
     console.log('从API获取用户信息:', response)
 
-    // 检查API返回的数据结构
-    if (response && typeof response === 'object') {
-      userInfo.value = { ...userInfo.value, ...response }
+    const apiUser = response?.user || response
+    if (apiUser && typeof apiUser === 'object') {
+      userInfo.value = { ...userInfo.value, ...apiUser }
       // 更新localStorage中的用户信息
-      localStorage.setItem('user', JSON.stringify(response))
+      localStorage.setItem('user', JSON.stringify(apiUser))
       console.log('用户信息已更新:', userInfo.value)
     } else {
       console.warn('API返回的用户信息格式不正确:', response)
@@ -218,38 +247,95 @@ onMounted(() => {
 
 <style scoped>
 .profile-container {
-  max-width: 800px;
-  margin: 0 auto;
+  max-width: 1320px;
+}
+
+.profile-grid {
+  display: grid;
+  grid-template-columns: 380px minmax(0, 1fr);
+  gap: var(--spacing-lg);
 }
 
 .profile-card {
-  margin-bottom: 20px;
+  min-height: 100%;
 }
 
-.card-header {
+.profile-summary-card {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.profile-summary {
+  display: flex;
   align-items: center;
-  font-size: 18px;
-  font-weight: bold;
+  gap: var(--spacing-md);
 }
 
-.profile-section {
-  margin-bottom: 30px;
+.profile-avatar {
+  background: linear-gradient(180deg, #2d61e4 0%, #1f4cc3 100%);
+  color: #fff;
+  font-size: 28px;
+  font-weight: 700;
 }
 
-.profile-section h3 {
-  margin-bottom: 20px;
-  color: #303133;
-  border-bottom: 1px solid #ebeef5;
-  padding-bottom: 10px;
+.profile-summary h2 {
+  margin: 0 0 6px;
+  font-size: 24px;
+  color: var(--text-primary);
+}
+
+.profile-summary p {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.profile-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--spacing-md);
+}
+
+.meta-item {
+  padding: 16px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(248, 250, 254, 0.94) 0%, rgba(255, 255, 255, 0.98) 100%);
+  border: 1px solid rgba(16, 35, 63, 0.08);
+}
+
+.meta-item span {
+  display: block;
+  margin-bottom: 8px;
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.meta-item strong {
+  color: var(--text-primary);
+}
+
+.section-head {
+  margin-bottom: var(--spacing-lg);
+}
+
+.section-head h3 {
+  margin: 0 0 6px;
+  font-size: var(--font-size-lg);
+  color: var(--text-primary);
+}
+
+.section-head p {
+  margin: 0;
+  color: var(--text-secondary);
 }
 
 .password-form {
-  max-width: 500px;
+  max-width: 580px;
 }
 
-.el-descriptions {
-  margin-bottom: 20px;
+@media (max-width: 1024px) {
+  .profile-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

@@ -63,3 +63,41 @@ export function deleteModel(id) {
     method: 'delete',
   })
 }
+
+export function getVisionProviders(params = {}) {
+  return request({
+    url: `${BASE_URL}/providers`,
+    method: 'get',
+    params,
+  })
+}
+
+export function createVisionProvider(data) {
+  return request({
+    url: `${BASE_URL}/providers`,
+    method: 'post',
+    data,
+  })
+}
+
+export function updateVisionProvider(id, data) {
+  return request({
+    url: `${BASE_URL}/providers/${id}`,
+    method: 'put',
+    data,
+  })
+}
+
+export function deleteVisionProvider(id) {
+  return request({
+    url: `${BASE_URL}/providers/${id}`,
+    method: 'delete',
+  })
+}
+
+export function getModelVersions(id) {
+  return request({
+    url: `${BASE_URL}/${id}/versions`,
+    method: 'get',
+  })
+}

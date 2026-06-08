@@ -1,26 +1,22 @@
 const express = require('express');
 const router = express.Router();
-const multer = require('multer');
 const classifier = require('../utils/classifier');
-
-const upload = multer({ dest: 'uploads/' });
+const { resolveRecognitionInput } = require('../utils/recognitionInput');
 
 /**
  * 分类接口
  * POST /classify
  */
-router.post('/', upload.single('image'), async (req, res) => {
+router.post('/', async (req, res) => {
   try {
-    console.log("文件分类接口")
-    if (!req.body.imageUrl) {
-      return res.status(400).json({ error: '请上传图片地址' });
-    }
-
-    const modelRes = await classifier.classifyImage(req.body.imageUrl);
-    console.log("识别结果：" + modelRes.bestMatch)
+    const input = await resolveRecognitionInput(req);
+    const modelRes = await classifier.classifyImage(input.input, { allowLocalFile: input.allowLocalFile });
+    modelRes.fileId = input.fileId;
+    modelRes.sha256 = input.sha256;
     res.json(modelRes);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    const status = /URL|HTTPS|白名单|内网|类型|大小|支持|本地|上传文件/.test(error.message) ? 400 : 500;
+    res.status(status).json({ error: error.message });
   }
 });
 
