@@ -483,15 +483,16 @@ onMounted(() => {
 .user-summary {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--spacing-md);
-  margin-bottom: var(--spacing-lg);
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
 .summary-card {
-  padding: 18px 20px;
+  min-height: 82px;
+  padding: 14px 16px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .summary-card span {
@@ -500,20 +501,20 @@ onMounted(() => {
 }
 
 .summary-card strong {
-  font-size: 28px;
+  font-size: 26px;
   line-height: 1;
   color: var(--text-primary);
 }
 
 .user-management-card {
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: 0;
 }
 
 .card-toolbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--spacing-md);
+  margin-bottom: 12px;
 }
 
 .toolbar-left,

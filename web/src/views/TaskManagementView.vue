@@ -24,22 +24,18 @@
       <div class="overview-card surface-card">
         <span class="overview-label">任务总数</span>
         <strong>{{ total }}</strong>
-        <small>当前分页统计</small>
       </div>
       <div class="overview-card surface-card">
         <span class="overview-label">进行中</span>
         <strong>{{ runningTaskCount }}</strong>
-        <small>包含 pending / running</small>
       </div>
       <div class="overview-card surface-card">
         <span class="overview-label">已完成</span>
         <strong>{{ completedTaskCount }}</strong>
-        <small>成功收口的任务</small>
       </div>
       <div class="overview-card surface-card">
         <span class="overview-label">失败项</span>
         <strong>{{ failedItemCount }}</strong>
-        <small>待重试或人工处理</small>
       </div>
     </div>
 
@@ -325,18 +321,19 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .task-card {
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: 0;
 }
 
 .overview-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--spacing-md);
-  margin-bottom: var(--spacing-lg);
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
 .overview-card {
-  padding: 18px 20px;
+  min-height: 82px;
+  padding: 14px 16px;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -348,18 +345,14 @@ onBeforeUnmount(() => {
 }
 
 .overview-card strong {
-  font-size: 30px;
+  font-size: 26px;
   line-height: 1;
   color: var(--text-primary);
 }
 
-.overview-card small {
-  color: var(--text-tertiary);
-}
-
 .card-toolbar {
   justify-content: space-between;
-  margin-bottom: var(--spacing-md);
+  margin-bottom: 12px;
 }
 
 .toolbar-left {
@@ -370,10 +363,10 @@ onBeforeUnmount(() => {
 }
 
 .dialog-intro {
-  margin-bottom: var(--spacing-lg);
-  padding: 14px 16px;
-  border-radius: 14px;
-  background: linear-gradient(180deg, rgba(36, 85, 214, 0.08) 0%, rgba(36, 85, 214, 0.03) 100%);
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: #f8fafc;
   color: var(--text-secondary);
 }
 

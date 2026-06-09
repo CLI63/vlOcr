@@ -22,7 +22,6 @@
         <div class="panel-title">
           <div>
             <h2>文件与来源</h2>
-            <p class="panel-subtitle">支持图片与 PDF，优先面向单次高质量识别流程。</p>
           </div>
           <el-tag effect="plain">{{ currentFile ? '已选文件' : '等待输入' }}</el-tag>
         </div>
@@ -93,7 +92,6 @@
         <div class="panel-title">
           <div>
             <h2>识别结果</h2>
-            <p class="panel-subtitle">从分类匹配到文本与 JSON 输出，统一在右侧工作区完成。</p>
           </div>
           <el-steps :active="activeStep" finish-status="success" simple class="status-steps">
             <el-step title="上传" />
@@ -112,7 +110,7 @@
           class="status-alert"
         />
 
-        <div class="result-summary">
+        <div v-if="hasResult || currentFile" class="result-summary">
           <el-descriptions :column="2" border>
             <el-descriptions-item label="最佳匹配">{{ result.bestMatch || '暂无' }}</el-descriptions-item>
             <el-descriptions-item label="耗时">{{ recognitionTime ? `${recognitionTime} 秒` : '暂无' }}</el-descriptions-item>
@@ -510,12 +508,12 @@ async function confirmCorrectionRecord() {
 <style scoped>
 .workspace-grid {
   display: grid;
-  grid-template-columns: minmax(360px, 430px) minmax(0, 1fr);
-  gap: var(--spacing-lg);
+  grid-template-columns: minmax(320px, 380px) minmax(0, 1fr);
+  gap: 16px;
 }
 
 .panel {
-  padding: var(--spacing-lg);
+  padding: 16px;
   min-width: 0;
 }
 
@@ -526,22 +524,16 @@ async function confirmCorrectionRecord() {
   color: var(--text-primary);
 }
 
-.panel-subtitle {
-  margin: 6px 0 0;
-  color: var(--text-secondary);
-  font-size: var(--font-size-sm);
-}
-
 .upload-area {
-  margin-bottom: var(--spacing-md);
+  margin-bottom: 12px;
 }
 
 .upload-area :deep(.el-upload-dragger) {
-  min-height: 184px;
+  min-height: 138px;
 }
 
 .upload-icon {
-  font-size: 42px;
+  font-size: 34px;
   color: var(--primary-color);
 }
 
@@ -553,35 +545,35 @@ async function confirmCorrectionRecord() {
 .upload-tip {
   color: var(--text-secondary);
   font-size: var(--font-size-sm);
-  margin-top: var(--spacing-xs);
+  margin-top: 4px;
 }
 
 .url-row {
   display: flex;
-  gap: var(--spacing-sm);
-  margin-bottom: var(--spacing-md);
+  gap: 8px;
+  margin-bottom: 12px;
 }
 
 .preview-box {
-  border: 1px dashed rgba(36, 85, 214, 0.2);
-  border-radius: 16px;
-  min-height: 280px;
+  border: 1px dashed rgba(37, 99, 235, 0.2);
+  border-radius: 8px;
+  min-height: 220px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   overflow: hidden;
-  margin-bottom: var(--spacing-md);
-  background: linear-gradient(180deg, rgba(248, 250, 254, 0.88) 0%, rgba(255, 255, 255, 0.98) 100%);
+  margin-bottom: 12px;
+  background: #f8fafc;
 }
 
 .image-preview {
   width: 100%;
-  height: 280px;
-  background: #f5f7fa;
+  height: 220px;
+  background: #f8fafc;
 }
 
 .pdf-preview {
-  height: 280px;
+  height: 220px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -591,7 +583,7 @@ async function confirmCorrectionRecord() {
 }
 
 .pdf-preview .el-icon {
-  font-size: 54px;
+  font-size: 42px;
   color: var(--primary-color);
 }
 
@@ -599,7 +591,7 @@ async function confirmCorrectionRecord() {
   display: flex;
   justify-content: space-between;
   gap: var(--spacing-sm);
-  padding: 14px 16px;
+  padding: 10px 12px;
   font-size: var(--font-size-sm);
   color: var(--text-secondary);
   border-top: 1px solid rgba(16, 35, 63, 0.08);
@@ -616,7 +608,7 @@ async function confirmCorrectionRecord() {
 }
 
 .status-steps {
-  max-width: 420px;
+  max-width: 360px;
 }
 
 .status-alert,
@@ -627,8 +619,8 @@ async function confirmCorrectionRecord() {
 }
 
 .result-content {
-  min-height: 260px;
-  max-height: 360px;
+  min-height: 220px;
+  max-height: 330px;
   overflow: auto;
 }
 
@@ -642,10 +634,10 @@ async function confirmCorrectionRecord() {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 14px;
-  border-radius: 14px;
-  background: linear-gradient(180deg, rgba(248, 250, 254, 0.92) 0%, rgba(255, 255, 255, 0.98) 100%);
-  border: 1px solid rgba(16, 35, 63, 0.08);
+  padding: 12px;
+  border-radius: 8px;
+  background: #f8fafc;
+  border: 1px solid rgba(23, 32, 51, 0.08);
 }
 
 .correction-field label {

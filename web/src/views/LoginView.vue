@@ -1,35 +1,17 @@
 <template>
   <div class="login-container">
-    <div class="login-scene">
-      <section class="login-stage">
-        <div class="login-hero">
-          <div class="hero-badge">OCR 管理后台</div>
-          <h1>把识别、校对、统计和模型配置收进一个稳定的工作台。</h1>
-          <p>
-            面向日常业务流转设计，帮助团队持续追踪识别结果、批量任务和模型表现。
-          </p>
-
-          <div class="hero-grid">
-            <div class="hero-card">
-              <span>多模型识别</span>
-              <strong>统一接入</strong>
-            </div>
-            <div class="hero-card">
-              <span>历史归档</span>
-              <strong>结构化追溯</strong>
-            </div>
-            <div class="hero-card">
-              <span>批量任务</span>
-              <strong>状态可见</strong>
-            </div>
-            <div class="hero-card">
-              <span>统计分析</span>
-              <strong>趋势与分布</strong>
-            </div>
-          </div>
+    <section class="login-stage">
+      <div class="login-brand">
+        <div class="brand-icon">
+          <el-icon><Monitor /></el-icon>
         </div>
+        <div>
+          <strong>vlOcr</strong>
+          <span>智能识别管理后台</span>
+        </div>
+      </div>
 
-        <div class="login-panel">
+      <div class="login-panel">
           <div class="panel-mark">
             <div class="panel-logo">
               <el-icon><Monitor /></el-icon>
@@ -78,12 +60,10 @@
           </el-form>
 
           <div class="login-footnote">
-            <span>当前系统支持模型管理、模板配置、历史追溯与批量任务。</span>
             <small>© {{ new Date().getFullYear() }} OCR 管理系统</small>
           </div>
-        </div>
-      </section>
-    </div>
+      </div>
+    </section>
   </div>
 </template>
 
@@ -176,151 +156,85 @@ const handleLogin = async () => {
 <style scoped>
 .login-container {
   min-height: 100vh;
-  padding: 24px;
-  background:
-    radial-gradient(circle at top left, rgba(36, 85, 214, 0.14), transparent 24%),
-    radial-gradient(circle at bottom right, rgba(15, 118, 110, 0.1), transparent 28%),
-    linear-gradient(180deg, #eff4fa 0%, #e8eef6 100%);
-}
-
-.login-scene {
-  min-height: calc(100vh - 48px);
-  border-radius: 32px;
-  padding: 20px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.42) 0%, rgba(255, 255, 255, 0.22) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  box-shadow: 0 26px 70px rgba(13, 27, 51, 0.08);
+  padding: 28px;
+  background: #f4f6f9;
 }
 
 .login-stage {
-  min-height: calc(100vh - 88px);
-  display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(380px, 470px);
-  gap: 24px;
-}
-
-.login-hero,
-.login-panel {
-  border-radius: 28px;
-  overflow: hidden;
-}
-
-.login-hero {
-  padding: 52px 56px;
-  background:
-    radial-gradient(circle at 18% 16%, rgba(255, 255, 255, 0.1), transparent 28%),
-    linear-gradient(145deg, #122846 0%, #17375e 52%, #1c4271 100%);
-  color: #ffffff;
+  min-height: calc(100vh - 56px);
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  position: relative;
-}
-
-.login-hero::after {
-  content: '';
-  position: absolute;
-  inset: auto 32px 32px auto;
-  width: 220px;
-  height: 220px;
-  border-radius: 999px;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.12), transparent 62%);
-  pointer-events: none;
-}
-
-.hero-badge {
-  display: inline-flex;
-  width: fit-content;
   align-items: center;
-  padding: 8px 14px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: rgba(255, 255, 255, 0.78);
-  font-size: 12px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  justify-content: center;
+  gap: 18px;
 }
 
-.login-hero h1 {
-  max-width: 720px;
-  margin: 28px 0 18px;
-  font-size: clamp(42px, 4vw, 60px);
-  line-height: 1.04;
-  letter-spacing: 0;
+.login-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-primary);
 }
 
-.login-hero p {
-  max-width: 560px;
-  margin: 0;
-  font-size: 16px;
-  line-height: 1.8;
-  color: rgba(240, 245, 253, 0.76);
+.brand-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #172033;
+  color: #ffffff;
+  font-size: 20px;
 }
 
-.hero-grid {
-  margin-top: 40px;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-}
-
-.hero-card {
-  padding: 18px 20px;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(8px);
-}
-
-.hero-card span {
+.login-brand strong {
   display: block;
-  margin-bottom: 8px;
-  color: rgba(240, 245, 253, 0.7);
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+  font-size: 22px;
+  line-height: 1.1;
 }
 
-.hero-card strong {
-  font-size: 18px;
-  line-height: 1.3;
+.login-brand span {
+  display: block;
+  margin-top: 4px;
+  color: var(--text-tertiary);
+  font-size: 13px;
 }
 
 .login-panel {
-  padding: 34px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, #ffffff 100%);
-  border: 1px solid rgba(16, 35, 63, 0.08);
-  box-shadow: 0 24px 56px rgba(16, 35, 63, 0.1);
+  width: min(100%, 430px);
+  padding: 28px;
+  border-radius: 8px;
+  background: #ffffff;
+  border: 1px solid rgba(23, 32, 51, 0.08);
+  box-shadow: var(--shadow-sm);
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
 }
 
 .panel-mark {
   display: flex;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 34px;
+  gap: 12px;
+  margin-bottom: 28px;
 }
 
 .panel-logo {
-  width: 58px;
-  height: 58px;
-  border-radius: 18px;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(180deg, #eff4ff 0%, #dfe8fb 100%);
+  background: #eef4ff;
   color: var(--primary-color);
-  font-size: 24px;
-  border: 1px solid rgba(36, 85, 214, 0.14);
+  font-size: 20px;
+  border: 1px solid rgba(37, 99, 235, 0.14);
 }
 
 .panel-mark h2 {
-  margin: 0 0 6px;
-  font-size: 28px;
+  margin: 0 0 4px;
+  font-size: 22px;
   line-height: 1.15;
   color: var(--text-primary);
 }
@@ -356,19 +270,20 @@ const handleLogin = async () => {
 
 .login-btn {
   width: 100%;
-  min-height: 46px;
+  min-height: 42px;
   margin-top: 10px;
 }
 
 .login-footnote {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  margin-top: 32px;
-  padding-top: 20px;
-  border-top: 1px solid rgba(16, 35, 63, 0.08);
+  gap: 8px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(23, 32, 51, 0.08);
   color: var(--text-secondary);
   font-size: 13px;
+  text-align: center;
 }
 
 .login-footnote small {

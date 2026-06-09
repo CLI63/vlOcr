@@ -320,19 +320,19 @@ onMounted(() => {
 <style scoped>
 .filters {
   display: flex;
-  gap: var(--spacing-md);
+  gap: 10px;
   align-items: center;
   flex-wrap: wrap;
 }
 
 .filter-card,
 .records-card {
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: 12px;
 }
 
 .card-toolbar {
   justify-content: space-between;
-  margin-bottom: var(--spacing-md);
+  margin-bottom: 10px;
 }
 
 .toolbar-left {

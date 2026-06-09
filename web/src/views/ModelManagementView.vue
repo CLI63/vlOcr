@@ -879,15 +879,16 @@ onMounted(async () => {
 .model-overview {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--spacing-md);
-  margin-bottom: var(--spacing-lg);
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
 .summary-card {
-  padding: 18px 20px;
+  min-height: 82px;
+  padding: 14px 16px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .summary-card span {
@@ -896,13 +897,13 @@ onMounted(async () => {
 }
 
 .summary-card strong {
-  font-size: 28px;
+  font-size: 26px;
   line-height: 1;
   color: var(--text-primary);
 }
 
 .model-cards {
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: 12px;
 }
 
 .model-card {
@@ -912,7 +913,7 @@ onMounted(async () => {
 }
 
 .model-card:hover {
-  transform: translateY(-5px);
+  transform: translateY(-2px);
 }
 
 .model-card-header {
@@ -932,19 +933,22 @@ onMounted(async () => {
 }
 
 .model-content {
-  min-height: 120px;
+  min-height: 92px;
   display: flex;
   flex-direction: column;
 }
 
 .model-description {
   color: var(--text-secondary);
-  margin-bottom: var(--spacing-md);
-  flex: 1;
+  margin: 0 0 12px;
+  min-height: 22px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .model-api {
-  margin-bottom: var(--spacing-md);
+  margin-bottom: 10px;
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
@@ -986,7 +990,7 @@ onMounted(async () => {
 .view-toggle {
   display: flex;
   justify-content: flex-end;
-  margin-bottom: var(--spacing-md);
+  margin-bottom: 12px;
 }
 
 .loading-container {

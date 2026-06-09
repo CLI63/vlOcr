@@ -27,37 +27,28 @@
       </div>
     </div>
 
-    <section class="overview-band">
-      <div class="overview-copy">
-        <span class="overview-eyebrow">识别概览</span>
-        <h2>用一个界面看清识别工作量、日常波动和主力模型。</h2>
-      </div>
-      <div class="overview-metrics">
-        <article class="metric-card metric-primary">
-          <div class="metric-head">
-            <span>总识别数量</span>
-            <el-icon><Document /></el-icon>
-          </div>
-          <strong>{{ totalRecognitions }}</strong>
-          <p>所有时间内累积的 OCR 识别量</p>
-        </article>
-        <article class="metric-card">
-          <div class="metric-head">
-            <span>今日识别数量</span>
-            <el-icon><Calendar /></el-icon>
-          </div>
-          <strong>{{ todayRecognitions }}</strong>
-          <p>今日已经完成的识别任务</p>
-        </article>
-        <article class="metric-card">
-          <div class="metric-head">
-            <span>日均识别数量</span>
-            <el-icon><TrendCharts /></el-icon>
-          </div>
-          <strong>{{ avgDailyRecognitions }}</strong>
-          <p>当前时间区间内的平均日负载</p>
-        </article>
-      </div>
+    <section class="overview-metrics">
+      <article class="metric-card metric-primary">
+        <div class="metric-head">
+          <span>总识别</span>
+          <el-icon><Document /></el-icon>
+        </div>
+        <strong>{{ totalRecognitions }}</strong>
+      </article>
+      <article class="metric-card">
+        <div class="metric-head">
+          <span>今日</span>
+          <el-icon><Calendar /></el-icon>
+        </div>
+        <strong>{{ todayRecognitions }}</strong>
+      </article>
+      <article class="metric-card">
+        <div class="metric-head">
+          <span>日均</span>
+          <el-icon><TrendCharts /></el-icon>
+        </div>
+        <strong>{{ avgDailyRecognitions }}</strong>
+      </article>
     </section>
 
     <section class="analytics-grid">
@@ -517,53 +508,28 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.overview-band {
-  display: grid;
-  grid-template-columns: minmax(320px, 1.1fr) minmax(0, 1.7fr);
-  gap: 20px;
-  padding: 24px;
-  margin-bottom: 24px;
-  border-radius: 28px;
-  background: linear-gradient(145deg, #f8fbff 0%, #eef3fb 100%);
-  border: 1px solid rgba(36, 85, 214, 0.08);
-  box-shadow: var(--shadow-sm);
-}
-
-.overview-copy {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.overview-eyebrow,
 .card-label {
   display: inline-flex;
-  margin-bottom: 10px;
+  margin-bottom: 6px;
   font-size: 11px;
-  letter-spacing: 0.08em;
+  letter-spacing: 0;
   text-transform: uppercase;
   color: var(--text-tertiary);
-}
-
-.overview-copy h2 {
-  margin: 0;
-  font-size: 32px;
-  line-height: 1.2;
-  color: var(--text-primary);
 }
 
 .overview-metrics {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
 .metric-card {
-  min-height: 176px;
-  padding: 20px;
-  border-radius: 22px;
-  background: rgba(255, 255, 255, 0.88);
-  border: 1px solid rgba(16, 35, 63, 0.06);
+  min-height: 98px;
+  padding: 16px;
+  border-radius: 8px;
+  background: #ffffff;
+  border: 1px solid rgba(23, 32, 51, 0.08);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -571,9 +537,9 @@ onUnmounted(() => {
 }
 
 .metric-primary {
-  background: linear-gradient(180deg, #2557da 0%, #1a459b 100%);
+  background: #172033;
   color: #ffffff;
-  box-shadow: 0 22px 46px rgba(36, 85, 214, 0.18);
+  box-shadow: var(--shadow-xs);
 }
 
 .metric-head {
@@ -595,34 +561,27 @@ onUnmounted(() => {
 }
 
 .metric-card strong {
-  font-size: 34px;
+  font-size: 30px;
   line-height: 1.1;
   color: inherit;
-}
-
-.metric-card p {
-  margin: 0;
-  color: inherit;
-  opacity: 0.72;
-  line-height: 1.6;
 }
 
 .analytics-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.45fr) minmax(360px, 0.95fr);
-  gap: 20px;
+  gap: 16px;
 }
 
 .analytics-side {
   display: grid;
-  grid-template-rows: minmax(320px, 1fr) minmax(360px, 1fr);
-  gap: 20px;
+  grid-template-rows: minmax(280px, 0.9fr) minmax(320px, 1fr);
+  gap: 16px;
 }
 
 .trend-card,
 .distribution-card,
 .ranking-card {
-  border-radius: 26px;
+  border-radius: 8px;
 }
 
 .card-header {
@@ -634,17 +593,17 @@ onUnmounted(() => {
 
 .card-header strong {
   display: block;
-  font-size: 18px;
+  font-size: 16px;
   color: var(--text-primary);
 }
 
 .chart-container {
-  height: 420px;
+  height: 380px;
   position: relative;
 }
 
 .distribution-shell {
-  height: 320px;
+  height: 270px;
   position: relative;
 }
 

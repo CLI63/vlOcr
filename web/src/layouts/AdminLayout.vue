@@ -7,8 +7,8 @@
             <el-icon><Monitor /></el-icon>
           </div>
           <div class="brand-copy">
-            <strong>OCR Control</strong>
-            <span>智能识别管理后台</span>
+            <strong>vlOcr</strong>
+            <span>识别后台</span>
           </div>
         </div>
 
@@ -26,10 +26,7 @@
                   <component :is="item.icon" />
                 </el-icon>
               </div>
-              <div class="menu-item-copy">
-                <span class="menu-item-label">{{ item.label }}</span>
-                <small class="menu-item-desc">{{ item.description }}</small>
-              </div>
+              <span class="menu-item-label">{{ item.label }}</span>
             </router-link>
           </nav>
         </div>
@@ -39,23 +36,10 @@
     <main class="main-content">
       <header class="header">
         <div class="header-left">
-          <div class="header-context">
-            <span class="header-eyebrow">OCR 管理后台</span>
-            <h1>{{ currentPageTitle }}</h1>
-          </div>
-          <div class="header-breadcrumb">
-            <el-breadcrumb separator="/">
-              <el-breadcrumb-item>控制台</el-breadcrumb-item>
-              <el-breadcrumb-item>{{ currentPageTitle }}</el-breadcrumb-item>
-            </el-breadcrumb>
-          </div>
+          <h1>{{ currentPageTitle }}</h1>
         </div>
 
         <div class="header-right">
-          <div class="header-chip">
-            <span>系统状态</span>
-            <strong>正常</strong>
-          </div>
           <el-dropdown trigger="click">
             <div class="user-info">
               <el-avatar :size="36">{{ userInitial }}</el-avatar>
@@ -129,51 +113,43 @@ const allMenuItems = [
   {
     path: '/dashboard/ocr-statistics',
     label: '统计分析',
-    description: '识别概览与趋势',
     icon: DataLine,
   },
   {
     path: '/dashboard/users',
     label: '用户管理',
-    description: '账号与权限维护',
     icon: UserFilled,
     adminOnly: true,
   },
   {
     path: '/dashboard/models',
     label: '模型管理',
-    description: '业务模型与接口配置',
     icon: Document,
   },
   {
     path: '/dashboard/history',
     label: '历史记录',
-    description: '识别档案与结果追溯',
     icon: Clock,
   },
   {
     path: '/dashboard/tasks',
     label: '批量任务',
-    description: '任务执行与状态查看',
     icon: Files,
   },
   {
     path: '/dashboard/templates',
     label: '模板管理',
-    description: '结构化模板定义',
     icon: Tickets,
     adminOnly: true,
   },
   {
     path: '/dashboard/test',
     label: '识别工作台',
-    description: '上传、识别与校对',
     icon: Tools,
   },
   {
     path: '/dashboard/profile',
     label: '个人中心',
-    description: '账号信息与安全设置',
     icon: User,
   },
 ]
@@ -205,9 +181,7 @@ const logout = () => {
 .admin-layout {
   display: flex;
   min-height: 100vh;
-  background:
-    radial-gradient(circle at top left, rgba(36, 85, 214, 0.08), transparent 22%),
-    linear-gradient(180deg, #eef3f9 0%, #e7edf6 100%);
+  background: var(--bg-base);
 }
 
 .sidebar {
@@ -215,18 +189,18 @@ const logout = () => {
   min-width: var(--sidebar-width);
   max-width: var(--sidebar-width);
   flex-shrink: 0;
-  padding: 22px 18px;
+  padding: 14px 12px;
 }
 
 .sidebar-shell {
-  height: calc(100vh - 44px);
+  height: calc(100vh - 28px);
   position: sticky;
-  top: 22px;
+  top: 14px;
   background: var(--bg-sidebar);
-  border-radius: 28px;
-  box-shadow: var(--shadow-lg);
+  border-radius: 8px;
+  box-shadow: var(--shadow-sm);
   color: rgba(232, 239, 251, 0.92);
-  padding: 22px 18px 18px;
+  padding: 14px 12px;
   display: flex;
   flex-direction: column;
   gap: 18px;
@@ -236,22 +210,22 @@ const logout = () => {
 .brand-block {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 4px 4px 16px;
+  gap: 10px;
+  padding: 4px 6px 14px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .brand-mark {
-  width: 48px;
-  height: 48px;
-  border-radius: 16px;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.12) 100%);
   color: #ffffff;
-  font-size: 22px;
+  font-size: 18px;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
 }
 
@@ -263,7 +237,7 @@ const logout = () => {
 }
 
 .brand-copy strong {
-  font-size: 19px;
+  font-size: 17px;
   font-weight: 650;
   color: #ffffff;
 }
@@ -283,7 +257,7 @@ const logout = () => {
 .menu {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
   flex: 1;
   min-height: 0;
   overflow-y: auto;
@@ -303,8 +277,9 @@ const logout = () => {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 12px;
-  border-radius: 16px;
+  min-height: 42px;
+  padding: 8px 10px;
+  border-radius: 8px;
   color: rgba(232, 239, 251, 0.76);
   text-decoration: none;
   transition:
@@ -317,19 +292,19 @@ const logout = () => {
 .menu-item:hover {
   color: #ffffff;
   background: rgba(255, 255, 255, 0.06);
-  transform: translateX(2px);
+  transform: none;
 }
 
 .menu-item.active {
   color: #ffffff;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.08) 100%);
+  background: rgba(255, 255, 255, 0.12);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .menu-item-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 12px;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -342,21 +317,10 @@ const logout = () => {
   background: rgba(255, 255, 255, 0.14);
 }
 
-.menu-item-copy {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  min-width: 0;
-}
-
 .menu-item-label {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   color: inherit;
-}
-
-.menu-item-desc {
-  display: none;
 }
 
 .main-content {
@@ -372,7 +336,7 @@ const logout = () => {
   justify-content: space-between;
   align-items: center;
   gap: var(--spacing-lg);
-  padding: 18px 30px 0 8px;
+  padding: 12px 22px 0 4px;
 }
 
 .header-left,
@@ -383,65 +347,25 @@ const logout = () => {
 }
 
 .header-left {
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
+  min-width: 0;
 }
 
-.header-context {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.header-eyebrow {
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-tertiary);
-}
-
-.header-context h1 {
+.header-left h1 {
   margin: 0;
-  font-size: 28px;
-  line-height: 1.15;
+  font-size: 22px;
+  line-height: 1.2;
   color: var(--text-primary);
-}
-
-.header-breadcrumb {
-  color: var(--text-secondary);
-}
-
-.header-chip {
-  padding: 10px 14px;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.78);
-  border: 1px solid rgba(16, 35, 63, 0.06);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  box-shadow: var(--shadow-xs);
-}
-
-.header-chip span {
-  font-size: 12px;
-  color: var(--text-tertiary);
-}
-
-.header-chip strong {
-  font-size: 13px;
-  color: var(--success-color);
 }
 
 .user-info {
   display: flex;
   align-items: center;
   gap: 12px;
-  min-height: 58px;
-  padding: 10px 14px;
-  background: rgba(255, 255, 255, 0.88);
-  border: 1px solid rgba(16, 35, 63, 0.06);
-  border-radius: 18px;
+  min-height: 46px;
+  padding: 6px 10px;
+  background: #ffffff;
+  border: 1px solid rgba(23, 32, 51, 0.08);
+  border-radius: 8px;
   cursor: pointer;
   box-shadow: var(--shadow-xs);
   transition:
@@ -452,7 +376,7 @@ const logout = () => {
 
 .user-info:hover {
   transform: translateY(-1px);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-xs);
 }
 
 .user-copy {
@@ -478,15 +402,15 @@ const logout = () => {
 .content-shell {
   flex: 1;
   min-height: 0;
-  padding: 10px 30px 30px 8px;
+  padding: 8px 22px 22px 4px;
 }
 
 .content {
   height: 100%;
-  border-radius: 32px;
-  background: rgba(255, 255, 255, 0.22);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  padding: 10px;
+  border-radius: 8px;
+  background: transparent;
+  border: 0;
+  padding: 0;
 }
 
 @media (max-width: 1280px) {

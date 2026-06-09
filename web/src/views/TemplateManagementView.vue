@@ -57,37 +57,92 @@
       </el-table>
     </el-card>
 
-    <el-dialog v-model="dialogVisible" :title="form.id ? '编辑模板' : '新增模板'" width="960px" destroy-on-close>
+    <el-dialog
+      v-model="dialogVisible"
+      :title="form.id ? '编辑模板' : '新增模板'"
+      width="min(1080px, calc(100vw - 48px))"
+      destroy-on-close
+    >
       <el-form :model="form" label-width="90px" class="template-form">
         <el-form-item label="模板名称">
-          <el-input v-model="form.name" placeholder="请输入模板名称" />
+          <el-input v-model="form.name" placeholder="例如：发票识别、合同关键信息、身份证信息" />
         </el-form-item>
         <el-form-item label="说明">
-          <el-input v-model="form.description" type="textarea" :rows="2" placeholder="请输入模板说明" />
+          <el-input v-model="form.description" type="textarea" :rows="2" placeholder="简单说明这个模板用于哪类文件" />
         </el-form-item>
         <el-form-item label="字段定义">
           <div class="field-editor">
+            <div class="field-guide">
+              <el-icon><InfoFilled /></el-icon>
+              <span>字段就是识别结果里的栏目。比如发票模板可填写：发票号码、开票日期、金额、购买方名称。</span>
+            </div>
             <div v-for="(field, index) in form.schemaJson" :key="index" class="field-row">
               <div class="field-row-head">
                 <strong>字段 {{ index + 1 }}</strong>
                 <el-button type="danger" text @click="removeField(index)">删除</el-button>
               </div>
               <div class="field-row-grid">
-                <el-input v-model="field.key" placeholder="字段 key" />
-                <el-input v-model="field.label" placeholder="字段名称" />
-                <el-select v-model="field.type" placeholder="类型">
-                  <el-option label="文本" value="text" />
-                  <el-option label="数字" value="number" />
-                  <el-option label="日期" value="date" />
-                  <el-option label="多行文本" value="textarea" />
-                </el-select>
-                <el-input v-model="field.exportLabel" placeholder="导出列名" />
-                <el-input-number v-model="field.order" :min="1" :max="999" />
-                <div class="field-switch">
-                  <span>必填</span>
-                  <el-switch v-model="field.required" />
+                <div class="field-control">
+                  <label>
+                    字段标识
+                    <el-tooltip content="给系统看的英文或拼音名称，建议只用字母、数字、下划线，例如 invoice_no。" placement="top">
+                      <el-icon><QuestionFilled /></el-icon>
+                    </el-tooltip>
+                  </label>
+                  <el-input v-model="field.key" placeholder="如 invoice_no" />
                 </div>
-                <el-input v-model="field.defaultValue" placeholder="默认值" />
+                <div class="field-control">
+                  <label>
+                    显示名称
+                    <el-tooltip content="给人看的字段名，会显示在模板校对表单里，例如 发票号码。" placement="top">
+                      <el-icon><QuestionFilled /></el-icon>
+                    </el-tooltip>
+                  </label>
+                  <el-input v-model="field.label" placeholder="如 发票号码" @blur="syncFieldExportLabel(field)" />
+                </div>
+                <div class="field-control field-control--type">
+                  <label>内容类型</label>
+                  <el-select v-model="field.type" placeholder="类型">
+                    <el-option label="文本" value="text" />
+                    <el-option label="数字" value="number" />
+                    <el-option label="日期" value="date" />
+                    <el-option label="多行文本" value="textarea" />
+                  </el-select>
+                </div>
+                <div class="field-control">
+                  <label>
+                    导出列名
+                    <el-tooltip content="导出 Excel/JSON 时使用的列标题。留空时建议与显示名称一致。" placement="top">
+                      <el-icon><QuestionFilled /></el-icon>
+                    </el-tooltip>
+                  </label>
+                  <el-input v-model="field.exportLabel" placeholder="如 发票号码" />
+                </div>
+                <div class="field-control field-control--order">
+                  <label>排序</label>
+                  <el-input-number v-model="field.order" :min="1" :max="999" />
+                </div>
+                <div class="field-control field-control--required">
+                  <label>
+                    必填
+                    <el-tooltip content="打开后表示这个字段很重要，后续校对时应尽量补齐。" placement="top">
+                      <el-icon><QuestionFilled /></el-icon>
+                    </el-tooltip>
+                  </label>
+                  <div class="field-switch">
+                    <span>{{ field.required ? '是' : '否' }}</span>
+                    <el-switch v-model="field.required" />
+                  </div>
+                </div>
+                <div class="field-control">
+                  <label>
+                    默认值
+                    <el-tooltip content="识别不到内容时自动填入的值。一般可以留空。" placement="top">
+                      <el-icon><QuestionFilled /></el-icon>
+                    </el-tooltip>
+                  </label>
+                  <el-input v-model="field.defaultValue" placeholder="通常留空" />
+                </div>
               </div>
             </div>
           </div>
@@ -112,7 +167,7 @@
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Files, Plus, Refresh } from '@element-plus/icons-vue'
+import { Files, InfoFilled, Plus, QuestionFilled, Refresh } from '@element-plus/icons-vue'
 import { createTemplate, deleteTemplate, getTemplates, updateTemplate } from '@/api/templates'
 
 defineOptions({
@@ -192,6 +247,12 @@ function addField() {
   form.schemaJson.push(createField())
 }
 
+function syncFieldExportLabel(field) {
+  if (!field.exportLabel && field.label) {
+    field.exportLabel = field.label
+  }
+}
+
 function removeField(index) {
   form.schemaJson.splice(index, 1)
 }
@@ -257,15 +318,16 @@ onMounted(() => {
 .template-summary {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--spacing-md);
-  margin-bottom: var(--spacing-lg);
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
 .summary-card {
-  padding: 18px 20px;
+  min-height: 82px;
+  padding: 14px 16px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .summary-card span {
@@ -274,13 +336,13 @@ onMounted(() => {
 }
 
 .summary-card strong {
-  font-size: 28px;
+  font-size: 26px;
   line-height: 1;
   color: var(--text-primary);
 }
 
 .card-toolbar {
-  margin-bottom: var(--spacing-md);
+  margin-bottom: 12px;
 }
 
 .toolbar-left {
@@ -297,10 +359,29 @@ onMounted(() => {
   margin-bottom: 16px;
 }
 
+.field-guide {
+  width: 100%;
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 1px solid rgba(48, 96, 186, 0.14);
+  border-radius: 8px;
+  background: rgba(238, 245, 255, 0.86);
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+
+.field-guide .el-icon {
+  flex: 0 0 auto;
+  color: var(--primary-color);
+}
+
 .field-row {
   border: 1px solid rgba(16, 35, 63, 0.08);
   background: linear-gradient(180deg, rgba(248, 250, 254, 0.92) 0%, rgba(255, 255, 255, 0.98) 100%);
-  border-radius: 16px;
+  border-radius: 8px;
   padding: 16px;
 }
 
@@ -319,9 +400,45 @@ onMounted(() => {
 
 .field-row-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr 140px 1fr 120px 110px 1fr;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
+  align-items: start;
+}
+
+.field-control {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field-control label {
+  min-height: 20px;
+  display: inline-flex;
   align-items: center;
+  gap: 4px;
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  line-height: 20px;
+}
+
+.field-control label .el-icon {
+  color: #8a99ad;
+  cursor: help;
+}
+
+.field-control--type,
+.field-control--order,
+.field-control--required {
+  min-width: 0;
+}
+
+.field-control--order :deep(.el-input-number) {
+  width: 100%;
+}
+
+.field-control :deep(.el-select) {
+  width: 100%;
 }
 
 .field-switch {
@@ -341,6 +458,13 @@ onMounted(() => {
 }
 
 @media (max-width: 1200px) {
+  .field-row-grid,
+  .template-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
   .field-row-grid,
   .template-summary {
     grid-template-columns: 1fr;

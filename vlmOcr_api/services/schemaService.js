@@ -37,6 +37,11 @@ async function indexExists(connection, tableName, indexName) {
   return rows[0].count > 0;
 }
 
+async function tableHasRows(connection, tableName) {
+  const [rows] = await connection.execute(`SELECT 1 FROM ${tableName} LIMIT 1`);
+  return rows.length > 0;
+}
+
 async function addColumnIfMissing(connection, tableName, columnName, definition) {
   if (!await columnExists(connection, tableName, columnName)) {
     await connection.execute(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${definition}`);
@@ -50,6 +55,10 @@ async function addIndexIfMissing(connection, tableName, indexName, definition) {
 }
 
 async function ensureDefaultAdmin(connection) {
+  if (await tableHasRows(connection, 'users')) {
+    return;
+  }
+
   const [rows] = await connection.execute('SELECT id FROM users WHERE username = ? LIMIT 1', ['admin']);
   if (rows.length > 0) {
     await connection.execute('UPDATE users SET role = ? WHERE username = ?', ['admin', 'admin']);
@@ -65,6 +74,10 @@ async function ensureDefaultAdmin(connection) {
 }
 
 async function ensureDefaultVisionProviders(connection) {
+  if (await tableHasRows(connection, 'vision_model_providers')) {
+    return;
+  }
+
   await connection.execute(
     `
       INSERT INTO vision_model_providers (id, label, value, providerType, description, enabled, sortOrder)
@@ -121,6 +134,10 @@ async function removeLegacyDefaultModels(connection) {
 }
 
 async function ensureDefaultModels(connection) {
+  if (await tableHasRows(connection, 'models')) {
+    return;
+  }
+
   await connection.execute(
     `
       INSERT IGNORE INTO models (id, modelName, description, glmTips, moreApi)
